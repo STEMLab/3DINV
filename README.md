@@ -1,6 +1,5 @@
 # 3DLWM
 
-
 This project is for browsing indoor spaces with 3D visualization tools (Google Earth/Cesium/NASA WorldWind)
 
 ## Quick Start
@@ -8,7 +7,8 @@ This project is for browsing indoor spaces with 3D visualization tools (Google E
 
 ## Authors
 
-Mouna Harrach (mharrach at hotmail dot com
+Mouna Harrach - TBD (mharrach at hotmail dot com)
 
-Suhee Jung (TBD)
-Eun Kwon (TBD)SADSDAD
+Suhee Jung - Pusan National University (TBD)
+
+Eun Kwon - Pusan National University (TBD)
