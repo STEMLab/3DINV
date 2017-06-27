@@ -1,3 +1,7 @@
+// This script is for displaying Lotte World Mall in 3D using Cesium
+// The navigation tools are not included
+// you can find them in the Navigation.js file
+
 function loadJSON(callback) {
 
     var xobj = new XMLHttpRequest();
