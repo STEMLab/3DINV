@@ -7,7 +7,7 @@ This project is for browsing indoor spaces with 3D visualization tools (Google E
 
 ## Authors
 
-Mouna Harrach - TBD (mharrach at hotmail dot com)
+Mouna Harrach - Engineering student in French National School of Geomatics (harrach dot mouna at hotmail dot com)
 
 Suhee Jung - Pusan National University (TBD)
 
