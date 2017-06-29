@@ -87,6 +87,15 @@ loadJSON(function(response) {
     // Array of edges
     var edges = [];
 
+    // Variables where the maximum and minimum coordinates will be stored
+    var max_x = 0;
+    var max_y = 0;
+    var max_z = 0;
+
+    var min_x = 0;
+    var min_y = 0;
+    var min_z = 0;
+
     // Extracting transition members
     var tm = jsonresponse.value.multiLayeredGraph.spaceLayers["0"].spaceLayerMember["0"].spaceLayer.edges["0"].transitionMember;
 
@@ -113,6 +122,27 @@ loadJSON(function(response) {
             var smObject = new stateMember([]);
             var coordinates = tm[i].transition.geometry.abstractCurve.value.posOrPointPropertyOrPointRep[k].value.value;
             smObject.coordinates.push(coordinates[0],coordinates[1],coordinates[2]);
+
+            // Getting the maximum and minimum coordinates
+            if (coordinates[0] > max_x) {
+                max_x = coordinates[0];
+            }
+            else if (coordinates[0] < min_x) {
+                min_x = coordinates[0];
+            }
+            if (coordinates[1] > max_y) {
+                max_y = coordinates[1];
+            }
+            else if (coordinates[1] < min_y) {
+                min_y = coordinates[1];
+            }
+            if (coordinates[2] > max_z) {
+                max_z = coordinates[2];
+            }
+            else if (coordinates[2] < min_z) {
+                min_z = coordinates[2];
+            }
+
             stateMembers.push(smObject);
         }
 
@@ -158,9 +188,31 @@ loadJSON(function(response) {
 
     }
 
-    console.log(nodes[0],edges[0]);
+    var center_x = (max_x + min_x) / 2;
+    var center_y = (max_x + min_y) / 2;
 
-  
+    for (var i = 0; i < edges.length; i++) {
+
+      for (var j = 0; j < edges[i].stateMembers.length; j++) {
+
+          var offset = new Cesium.Cartesian3(edges[i].stateMembers[j].coordinates[0] - center_x,
+                                             edges[i].stateMembers[j].coordinates[1] - center_y,
+                                             edges[i].stateMembers[j].coordinates[2] - min_z);
+
+          var finalPos = Cesium.Matrix4.multiplyByPoint(orientation, offset, new Cesium.Cartesian3());
+
+          var new_coord = Cesium.Matrix4.multiplyByPoint(ENU, finalPos, finalPos);
+
+          edges[i].stateMembers[j].coordinates[0] = new_coord.x;
+          edges[i].stateMembers[j].coordinates[1] = new_coord.y;
+          edges[i].stateMembers[j].coordinates[2] = new_coord.z;
+
+      }
+
+    }
+
+    console.log(edges[0]);
+
 
 
 });
