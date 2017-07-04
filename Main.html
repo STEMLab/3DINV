@@ -10,14 +10,27 @@
             width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
         }
     </style>
+          <div id="toolbar">
+                <table class="infoPanel">
+                    <tbody>
+                        <tr>
+                            <td>Heading: <span id="heading"></span>°</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
   </head>
   <body>
     <div id="cesiumContainer"></div>
     <script>
         var viewer = new Cesium.Viewer('cesiumContainer');
     </script>
+    
+      
+    <script src="Display.js" id = "hi"></script>
+    <script src="Navigation.js"></script>  
 
-    <script src="Display.js"></script>
-    <script src="Navigation.js"></script>
+
+
   </body>
 </html>
