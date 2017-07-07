@@ -25,7 +25,7 @@ loadJSON(function(response) {
 
     // Parsing the json response.
     jsonresponse = JSON.parse(response);
-    // console.log(jsonresponse);
+    console.log(jsonresponse);
 
     // Creating the cellSpaceMember Class
     function cellSpaceMember(description,href,surfaceMember){
@@ -194,7 +194,7 @@ loadJSON(function(response) {
                                     perPositionHeight : true
                                   }),
                                    attributes : {
-                                     color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromRandom({alpha : 0.3}))
+                                     color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromRandom({alpha : 0.90}))
                                    }
                             }));
         }
@@ -205,5 +205,149 @@ loadJSON(function(response) {
       geometryInstances : instances,
       appearance : new Cesium.PerInstanceColorAppearance({/*material : Cesium.Material.fromType('Stripe')*/})
     }));
+
+
+    // Working on the graph elements
+    // State Member Class
+    function stateMember(coordinates){
+      this.coordinates = coordinates; // Array of coordinates
+    }
+
+    // Array of nodes
+    var nodes = [];
+
+    // Extracting state members
+    var sm = jsonresponse.value.multiLayeredGraph.spaceLayers["0"].spaceLayerMember["0"].spaceLayer.nodes["0"].stateMember;
+
+    // Loop through state members and extracting each state member coordinates
+    for (var i = 0; i < sm.length; i++) {
+
+        // Creating a state member instance
+        var stateMemberObject = new stateMember([]);
+
+        // X,Y,Z coordinates of a state member
+        var coordinates = sm[i].state.geometry.point.pos.value;
+
+        stateMemberObject.coordinates.push(coordinates[0],coordinates[1],coordinates[2]);
+
+        // Adding the state member to the nodes array
+        nodes.push(stateMemberObject);
+    }
+
+
+    // Transition member Class
+    function transitionMember(connects,description,coordinates){
+      this.connects = connects; // Array of href
+      this.description = description; // information about section and floor...
+      this.stateMembers = stateMembers; // Array of state members, each state member has X,Y,Z coordinates
+    }
+
+    // Array of edges
+    var edges = [];
+
+    // Extracting transition members
+    var tm = jsonresponse.value.multiLayeredGraph.spaceLayers["0"].spaceLayerMember["0"].spaceLayer.edges["0"].transitionMember;
+
+    // Loop through transition Members and extracting connection, description and state members of each transition member
+    for (var i = 0; i < tm.length; i++) {
+
+        // Array of connections of a transition member
+        var connects = [];
+
+        // Getting the href of each connection
+        for (var j = 0; j < tm[i].transition.connects.length; j++) {
+              connects.push(tm[i].transition.connects[j].href);
+        }
+
+        // Description of a transition member
+        var description = tm[i].transition.description.value;
+
+        // Array of state members
+        var stateMembers = [];
+
+        // Getting coordinates of each state member
+        for (var k = 0; k < tm[i].transition.geometry.abstractCurve.value.posOrPointPropertyOrPointRep.length; k++) {
+            // Creating a state member instance
+            var smObject = new stateMember([]);
+            var coordinates = tm[i].transition.geometry.abstractCurve.value.posOrPointPropertyOrPointRep[k].value.value;
+            smObject.coordinates.push(coordinates[0],coordinates[1],coordinates[2]);
+            stateMembers.push(smObject);
+        }
+
+        // Creating a transition member instance
+        var transitionMemberObject = new transitionMember(connects,description,stateMembers);
+
+        // Adding the transition member to edges array
+        edges.push(transitionMemberObject);
+
+    }
+
+
+    // Applying translation and rotation to the nodes
+    for (var i = 0; i < nodes.length; i++) {
+
+      // Translating coordinates + converting the result to Cartesian3
+      var offset = new Cesium.Cartesian3(nodes[i].coordinates[0] - center_X,
+                                         nodes[i].coordinates[1] - center_Y,
+                                         nodes[i].coordinates[2] - min_Z);
+
+      // Applying rotation to the offset
+      var finalPos = Cesium.Matrix4.multiplyByPoint(orientation, offset, new Cesium.Cartesian3());
+
+      // Report offset to the actual position of LWM
+      var new_coord = Cesium.Matrix4.multiplyByPoint(ENU, finalPos, finalPos);
+
+      // Replacing the old coordinates by the new ones
+      nodes[i].coordinates[0] = new_coord.x;
+      nodes[i].coordinates[1] = new_coord.y;
+      nodes[i].coordinates[2] = new_coord.z;
+
+    }
+    // Applying translation and rotation to the edges
+    for (var i = 0; i < edges.length; i++) {
+
+      for (var j = 0; j < edges[i].stateMembers.length; j++) {
+
+          var offset = new Cesium.Cartesian3(edges[i].stateMembers[j].coordinates[0] - center_X,
+                                             edges[i].stateMembers[j].coordinates[1] - center_Y,
+                                             edges[i].stateMembers[j].coordinates[2] - min_Z);
+
+          var finalPos = Cesium.Matrix4.multiplyByPoint(orientation, offset, new Cesium.Cartesian3());
+
+          var new_coord = Cesium.Matrix4.multiplyByPoint(ENU, finalPos, finalPos);
+
+          edges[i].stateMembers[j].coordinates[0] = new_coord.x;
+          edges[i].stateMembers[j].coordinates[1] = new_coord.y;
+          edges[i].stateMembers[j].coordinates[2] = new_coord.z;
+
+      }
+
+
+    }
+
+    // Displaying the edges
+    for(i = 0 ; i < edges.length; i++){
+
+      var line = viewer.entities.add({
+        name : 'line ' + edges[i].connects,
+        polyline : {
+          positions : [
+            new Cesium.Cartesian3(
+              edges[i].stateMembers[0].coordinates[0],
+              edges[i].stateMembers[0].coordinates[1],
+              edges[i].stateMembers[0].coordinates[2]),
+            new Cesium.Cartesian3(
+              edges[i].stateMembers[1].coordinates[0],
+              edges[i].stateMembers[1].coordinates[1],
+              edges[i].stateMembers[1].coordinates[2])
+            ],
+          followSurface : new Cesium.ConstantProperty(false),
+          width : new Cesium.ConstantProperty(2),
+          material : Cesium.Color.fromRandom({alpha : 1.0}),
+          show : true
+        }
+      });
+    }
+
 
 });
