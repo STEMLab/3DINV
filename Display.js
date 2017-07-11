@@ -2,6 +2,7 @@
 // The navigation tools are not included
 // you can find them in the Navigation.js file
 
+
 function loadJSON(callback) {
 
     var xobj = new XMLHttpRequest();
@@ -34,7 +35,7 @@ loadJSON(function(response) {
       this.surfaceMember = surfaceMember; // Array of surface members
     }
 
-    // Creating the surfaceMember Class
+    // Creating the surfaceMember Class`
     function surfaceMember(coordinates){
       this.coordinates = coordinates; //Array of surfaceMember coordinates
     }
@@ -194,7 +195,7 @@ loadJSON(function(response) {
                                     perPositionHeight : true
                                   }),
                                    attributes : {
-                                     color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromRandom({alpha : 0.90}))
+                                     color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromRandom())
                                    }
                             }));
         }
@@ -342,12 +343,16 @@ loadJSON(function(response) {
               edges[i].stateMembers[1].coordinates[2])
             ],
           followSurface : new Cesium.ConstantProperty(false),
-          width : new Cesium.ConstantProperty(2),
-          material : Cesium.Color.fromRandom({alpha : 1.0}),
+          width : new Cesium.ConstantProperty(15),
+//          material : Cesium.Color.fromRandom({alpha : 1.0}),
+          material : Cesium.Color.WHITE,
+            
           show : true
         }
       });
     }
-
-
+    
+    navigate(nodes, edges);
 });
+
+

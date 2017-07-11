@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Main Page</title>
+    <title>Test Camera</title>
     <script src="../Build/Cesium/Cesium.js"></script>
     <style>
         @import url(../Build/Cesium/Widgets/widgets.css);
@@ -24,22 +24,14 @@
     
   <body>
       <div id="cesiumContainer"></div>
-          
+      
       <script>
         var viewer = new Cesium.Viewer('cesiumContainer');
       </script>
-        
-      <script src="Display.js"></script>
-      <script src="Navigation.js"></script>
-      
+      <script src="cameraTest.js"></script>
+
       <div class = "toolbar">
-          <table style="color:white">
-              <tr>
-                  <td>Heading: <span id="heading"></span>°</td>
-              </tr>
-              <tr>
-                <td>Position: <span id="position"></span></td>
-              </tr>
+          <table>
               <tr>
                 <td><button class="cesium-button cesium-button-toolbar"
                             id="turnUptBtn"
@@ -59,6 +51,6 @@
               </tr>
           </table>
       </div>
-
+      
     </body>
 </html>
