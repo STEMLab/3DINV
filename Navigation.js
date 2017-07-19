@@ -2,13 +2,18 @@
 function Map() {
     this.elements = {};
     this.length = 0;
+    this.index = [];
 }
 Map.prototype.put = function(key,value) {
     this.length++;
     this.elements[key] = value;
+    this.index.push(key);
 }
 Map.prototype.get = function(key) {
     return this.elements[key];
+}
+Map.prototype.getKeyByIndex = function(index){
+    return this.index[index];
 }
 
 // define structure
@@ -22,10 +27,22 @@ function coordination(){
     }
 }
 
+function coordination(_x, _y, _z){
+    this.x = _x;
+    this.y = _y;
+    this.z = _z;
+    
+    function toString(){
+        return x+", "+y+", "+z;
+    }
+}
+
 // functions for running navigate
 function transformCamera(camera, newPosition){
     console.log("move to "+newPosition);
-    camera.position = newPosition;
+    camera.flyTo({
+        destination : newPosition
+    });
 }
 function getFloorsData(edges){
     var floors = new Array();
@@ -105,10 +122,28 @@ function moveToSrc(camera, src, dst, nowT){
         var moved = new coordination;
         moved.x = newT * (dst.x - src.x) + src.x;
         moved.y = newT * (dst.y - src.y) + src.y;
-        moved.z = newT * (dst.z - src.z) + src.z;
+        moved.z = newT * (dst.z - src.z) + src.z+2;
 //        moved.z = camera.position.z;
         console.log(moved);
-        camera.position = new Cesium.Cartesian3(moved.x, moved.y, moved.z);
+        
+        var heading = camera.heading;
+        var pitch = camera.pitch;
+        var roll = camera.roll;
+        
+        camera.flyTo({
+            destination : new Cesium.Cartesian3(
+                moved.x,
+                moved.y,
+                moved.z
+            ),
+            orientation: {
+                heading : heading,
+                pitch : pitch,
+                roll : roll
+            }
+        });
+        
+//        camera.position = new Cesium.Cartesian3(moved.x, moved.y, moved.z);
     }
 }
 function moveToDst(camera, src, dst, nowT){
@@ -118,10 +153,28 @@ function moveToDst(camera, src, dst, nowT){
         var moved = new coordination;
         moved.x = newT * (dst.x - src.x) + src.x;
         moved.y = newT * (dst.y - src.y) + src.y;
-        moved.z = newT * (dst.z - src.z) + src.z;
+        moved.z = newT * (dst.z - src.z) + src.z+2;
 //        moved.z = camera.position.z;
         console.log(moved);
-        camera.position = new Cesium.Cartesian3(moved.x, moved.y, moved.z);
+        
+        var heading = camera.heading;
+        var pitch = camera.pitch;
+        var roll = camera.roll;
+        
+        camera.flyTo({
+            destination : new Cesium.Cartesian3(
+                moved.x,
+                moved.y,
+                moved.z
+            ),
+            orientation: {
+                heading : heading,
+                pitch : pitch,
+                roll : roll
+            }
+        });
+        
+//        camera.position = new Cesium.Cartesian3(moved.x, moved.y, moved.z);
     }
 }
 
@@ -160,33 +213,129 @@ function onClickBackToOrigianlViewBtn(){
     });
 }
 
-
-function navigate(nodes, edges){
-    console.log(edges);    
-        
-    var zCoordinationForEachFloor = new Map();
-    zCoordinationForEachFloor = getFloorsData(edges);
-	console.log(zCoordinationForEachFloor);
+// make dom data for tree view
+var sectionData = new Map(); // key description, value map room
+function makeSectionData(edges){
+    var nowDescription = "";
     
-    console.log(edges[1].stateMembers[1].coordinates[0], edges[1].stateMembers[1].coordinates[1], zCoordinationForEachFloor.get(edges[1].description));
+    for(i = 0 ; i < edges.length; i++){
+        if (edges[i].description != nowDescription){
+            nowDescription = edges[i].description;
+    
+            // key room href, value coordination of room 
+            sectionData.put(nowDescription, new Map());
+        }
+        
+        for(j = 0; j < 2; j++){
+            if(sectionData.get(nowDescription) != null){
+                sectionData.get(nowDescription).put(edges[i].connects[j],
+                                                new coordination(edges[i].stateMembers[j].coordinates[0],
+                                                                edges[i].stateMembers[j].coordinates[1],
+                                                                edges[i].stateMembers[j].coordinates[2]));
+            }
+        }
+    }
+}
 
-    var nowNode = 1000;
-    // move camera to start node
+function makeTreeView(sectionData){
+    var tree = document.getElementById('treeview_for_floor');
+    
+    var firstNode = document.getElementById('firstRoot'); 
+    firstNode.innerHTML = sectionData.getKeyByIndex(0);
+        
+}
+function findCoordinationById(section, roomHref){
+    console.log(section, roomHref);
+    
+    coor = new coordination();
+    coor = (sectionData.get(section)).get(roomHref);
+    
+    return coor;
+}
+
+function onClickTreeView(spanValue){
+    var tree = document.getElementById('treeview_for_floor');
+//    var node = tree.element.find('li.active');
+    
+//    var pickedRoom = findCoordinationById(node.id);
+    var pickedRoom = findCoordinationById(spanValue.innerHTML, '#R3737');
+    
+    
     camera.flyTo({
-        destination : new Cesium.Cartesian3(edges[nowNode].stateMembers[1].coordinates[0], edges[nowNode].stateMembers[1].coordinates[1], edges[nowNode].stateMembers[1].coordinates[2]),
+        destination : new Cesium.Cartesian3(
+            pickedRoom.x,
+            pickedRoom.y,
+            pickedRoom.z+2
+        ),
         orientation: {
             heading : Cesium.Math.toRadians(90.0),
             pitch : Cesium.Math.toRadians(0),
             roll : 0.0
         }
     });
+}
+
+
+function navigate(nodes, edges){
+    var headingSpan = document.getElementById('heading');
+    var positionSpan = document.getElementById('position');
+
+//viewer.scene.preRender.addEventListener(function(scene, time) {
+//    headingSpan.innerHTML = Cesium.Math.toDegrees(camera.heading).toFixed(1);
+//    positionSpan.innerHTML = camera.position;
+//});
+    
+    console.log(edges);    
+    
+    makeSectionData(edges);
+    console.log(sectionData);
+    
+    makeTreeView(sectionData);
+    
+//    var zCoordinationForEachFloor = new Map();
+//    zCoordinationForEachFloor = getFloorsData(edges);
+//    
+//    console.log(edges[1].stateMembers[1].coordinates[0], edges[1].stateMembers[1].coordinates[1], zCoordinationForEachFloor.get(edges[1].description));
+
+    
+    // move camera to start node
+    var startNode = 100;
+    var zfactor = 5;
+    
+//    camera.flyTo({
+//        destination : new Cesium.Cartesian3(
+//            edges[startNode].stateMembers[0].coordinates[0],
+//            edges[startNode].stateMembers[0].coordinates[1],
+//            edges[startNode].stateMembers[0].coordinates[2]
+//        ),
+//        orientation: {
+//            heading : Cesium.Math.toRadians(90.0),
+//            pitch : Cesium.Math.toRadians(0),
+//            roll : 0.0
+//        }
+//    });
+
+    
+//    camera.position = new Cesium.Cartesian3(
+//            edges[startNode].stateMembers[0].coordinates[0],
+//            edges[startNode].stateMembers[0].coordinates[1],
+//            edges[startNode].stateMembers[0].coordinates[2]);
+//    
+//    camera.setView({
+//        orientation: {
+//            heading : Cesium.Math.toRadians(90.0),
+//            pitch : Cesium.Math.toRadians(0),
+//            roll : 0.0
+//        }
+//    });
+    
+    viewer.flyTo(viewer.entities);
     
     // set onclick path
     var handler = new Cesium.ScreenSpaceEventHandler(canvas);
 
     handler.setInputAction(function(movement) {
         var feature = viewer.scene.pick(movement.position);
-		console.log(feature);
         if (Cesium.defined(feature)) {
             if (Cesium.defined(feature['id']['polyline'])) {
                 var src = new coordination;
@@ -218,3 +367,4 @@ function navigate(nodes, edges){
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);   
 }
+

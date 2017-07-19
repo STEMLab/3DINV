@@ -18,7 +18,6 @@ function loadJSON(callback) {
         }
     }
     xobj.send(null);
-
 }
 
 // Call to function with anonymous callback
@@ -179,32 +178,70 @@ loadJSON(function(response) {
             }
         }
     }
-
+    
+    
     // Drawing polygones using primitives
     var scene = viewer.scene;
 
     // Array of instances
     var instances = [];
-
+    var outlineInstances = [];
+    var roomColor = [Cesium.Color.fromBytes(227, 253, 253), 
+                     Cesium.Color.fromBytes(203, 241, 245), 
+                     Cesium.Color.fromBytes(166, 227, 233), 
+                     Cesium.Color.fromBytes(113, 201, 206)];
+    
     // Loop through cell space members and creating geometry instances
     for (var i = 0; i < cellSpaceMembers.length; i++) {
         for (var j = 0; j < cellSpaceMembers[i].surfaceMember.length; j++) {
               instances.push(new Cesium.GeometryInstance({
-                                  geometry : new Cesium.PolygonGeometry({
-                                    polygonHierarchy : new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates)),
-                                    perPositionHeight : true
-                                  }),
-                                   attributes : {
-                                     color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromRandom())
-                                   }
-                            }));
+                  geometry : new Cesium.PolygonGeometry({
+                      polygonHierarchy : new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates)),
+                      perPositionHeight : true
+                  }),
+                  attributes : {
+                      color : Cesium.ColorGeometryInstanceAttribute.fromColor(roomColor[Math.floor(Math.random()*roomColor.length)].withAlpha(0.5))
+                  }
+              }));
+            
+            outlineInstances.push(new Cesium.GeometryInstance({
+                geometry : new Cesium.PolygonOutlineGeometry({
+                    polygonHierarchy : new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates)),
+                    perPositionHeight : true,
+                }),
+                attributes : {
+                    color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.BLACK)
+                }
+            }));
         }
     }
-
+    
     // Adding instances to primitives
     scene.primitives.add(new Cesium.Primitive({
-      geometryInstances : instances,
-      appearance : new Cesium.PerInstanceColorAppearance({/*material : Cesium.Material.fromType('Stripe')*/})
+        geometryInstances : instances,
+        appearance : new Cesium.PerInstanceColorAppearance({
+            faceForward : true,
+            flat : true,
+            translucent : false
+        }),
+//        shadows : Cesium.ShadowMode.ENABLED
+    }));
+    
+    scene.primitives.add(new Cesium.Primitive({
+        geometryInstances : outlineInstances,
+        appearance : new Cesium.PerInstanceColorAppearance({
+            flat : true,
+            renderState : {
+                depthTest : {
+                    enabled : true,
+                    func : Cesium.DepthFunction.LESS
+                },
+                depthMask : false,
+                blending : Cesium.BlendingState.ALPHA_BLEND,
+                lineWidth  : 1000
+            }
+        }),
+//        shadows : Cesium.ShadowMode.ENABLED
     }));
 
 
@@ -343,11 +380,9 @@ loadJSON(function(response) {
               edges[i].stateMembers[1].coordinates[2])
             ],
           followSurface : new Cesium.ConstantProperty(false),
-          width : new Cesium.ConstantProperty(15),
-//          material : Cesium.Color.fromRandom({alpha : 1.0}),
-          material : Cesium.Color.WHITE,
-            
-          show : true
+          width : new Cesium.ConstantProperty(20),
+          distanceDisplayCondition : new Cesium.DistanceDisplayCondition(0, 10.0),
+          material : Cesium.Color.BLACK
         }
       });
     }
