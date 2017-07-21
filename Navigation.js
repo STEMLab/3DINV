@@ -1,26 +1,57 @@
+// global variable
+var scene = viewer.scene;
+var canvas = viewer.canvas;
+canvas.setAttribute('tabindex', '0'); // needed to put focus on the canvas
+canvas.onclick = function() {
+       canvas.focus();
+};
+
+var ellipsoid = scene.globe.ellipsoid;
+var camera = viewer.camera;
+var controller = scene.screenSpaceCameraController;
+
+var turnRate = 0.2;
+var moveRate = 0.2;
+var zfactor = 2;
+
+var currentEdge = -1; // test data
+
+var edges = new Array();
+
+
+
+
 // define map
 function Map() {
     this.elements = {};
     this.length = 0;
     this.index = [];
 }
+
 Map.prototype.put = function(key,value) {
     this.length++;
     this.elements[key] = value;
     this.index.push(key);
 }
+
 Map.prototype.get = function(key) {
     return this.elements[key];
 }
+
 Map.prototype.getKeyByIndex = function(index){
     return this.index[index];
 }
 
-// define structure
+
+
+
+
+// define coordination structure
 function coordination(){
     var x = 0;
     var y = 0;
     var z = 0;
+    var href = null;
     
     function toString(){
         return x+", "+y+", "+z;
@@ -31,56 +62,43 @@ function coordination(_x, _y, _z){
     this.x = _x;
     this.y = _y;
     this.z = _z;
+    this.href = null;
     
     function toString(){
         return x+", "+y+", "+z;
     }
 }
 
-// functions for running navigate
-function transformCamera(camera, newPosition){
-    console.log("move to "+newPosition);
+
+
+
+
+// functions for moving camera
+function transformCamera(newPosition){
+    console.log(newPosition);
+    
+    var heading = camera.heading;
+    var pitch = camera.pitch;
+    var roll = camera.roll;
+    
     camera.flyTo({
-        destination : newPosition
+        destination : new Cesium.Cartesian3(
+                newPosition.x,
+                newPosition.y,
+                newPosition.z+zfactor
+        ),
+        orientation: {
+                heading : heading,
+                pitch : pitch,
+                roll : roll
+        }
     });
-}
-function getFloorsData(edges){
-    var floors = new Array();
-    var num = 0;
     
-    floors[num] = new Array();
-    floors[num].push(edges[0]);
+    camera.position = new Cesium.Cartesian3(newPosition.x, newPosition.y, newPosition.z);
     
-    var nowDescription = edges[0].description;
-//    console.log("now "+nowDescription);
-    
-    for(i = 0 ; i < edges.length; i++){
-        if (edges[i].description != nowDescription){
-            num++;
-            floors[num] = new Array();
-            nowDescription = edges[i].description;
-//            console.log("now "+nowDescription);
-        }
-        floors[num].push(edges[i]);
-    }
-    
-//    console.log(floors);
-    
-    var zCoordinationForEachFloor = new Map();
-    for(i = 0; i < num; i++){
-        var sum = 0;
-        for(j = 0 ; j < floors[i].length; j++){
-            sum += floors[i][j].stateMembers[0].coordinates[2];
-            sum += floors[i][j].stateMembers[1].coordinates[2];
-        }
-//        console.log(sum +" "+ floors[i].length);
-        zCoordinationForEachFloor.put(floors[i][0].description, sum/(floors[i].length*2));
-    }
-    
-    return zCoordinationForEachFloor; // key : description, value : avg z coordination for each key.
+
 }
 
-var moveRate = 0.2;
 function getDirection(src, dst, now, heading){
     var transSrc = new coordination;
     var transDst = new coordination;
@@ -112,96 +130,97 @@ function getDirection(src, dst, now, heading){
     
     return direction;
 }
+
 function getT(src, dst, now){
     return (now.x - src.x) / (dst.x - src.x);
 }
-function moveToSrc(camera, src, dst, nowT){
+
+function getMovedCoordination(newT, src, dst){
+    var moved = new coordination;
+    moved.x = newT * (dst.x - src.x) + src.x;
+    moved.y = newT * (dst.y - src.y) + src.y;
+    moved.z = newT * (dst.z - src.z) + src.z;
+    
+    return moved;
+}
+
+function moveToSrc(src, dst, nowT){
+    console.log("moveToSrc");
     if( nowT == 0 ){} // do nothing, camera no src 
     else{
         var newT = nowT - moveRate;
-        var moved = new coordination;
-        moved.x = newT * (dst.x - src.x) + src.x;
-        moved.y = newT * (dst.y - src.y) + src.y;
-        moved.z = newT * (dst.z - src.z) + src.z+2;
-//        moved.z = camera.position.z;
-        console.log(moved);
-        
-        var heading = camera.heading;
-        var pitch = camera.pitch;
-        var roll = camera.roll;
-        
-        camera.flyTo({
-            destination : new Cesium.Cartesian3(
-                moved.x,
-                moved.y,
-                moved.z
-            ),
-            orientation: {
-                heading : heading,
-                pitch : pitch,
-                roll : roll
-            }
-        });
-        
-//        camera.position = new Cesium.Cartesian3(moved.x, moved.y, moved.z);
+        var moved = getMovedCoordination(newT, src, dst);
+        transformCamera(moved);
     }
 }
-function moveToDst(camera, src, dst, nowT){
+
+function moveToDst(src, dst, nowT){
     if( nowT == 1 ){} // do nothing, camera no dst
     else{
         var newT = nowT + moveRate;
-        var moved = new coordination;
-        moved.x = newT * (dst.x - src.x) + src.x;
-        moved.y = newT * (dst.y - src.y) + src.y;
-        moved.z = newT * (dst.z - src.z) + src.z+2;
-//        moved.z = camera.position.z;
-        console.log(moved);
-        
-        var heading = camera.heading;
-        var pitch = camera.pitch;
-        var roll = camera.roll;
-        
-        camera.flyTo({
-            destination : new Cesium.Cartesian3(
-                moved.x,
-                moved.y,
-                moved.z
-            ),
-            orientation: {
-                heading : heading,
-                pitch : pitch,
-                roll : roll
-            }
-        });
-        
-//        camera.position = new Cesium.Cartesian3(moved.x, moved.y, moved.z);
+        var moved = getMovedCoordination(newT, src, dst);
+        transformCamera(moved);
     }
 }
 
-// onclick function for btn
-var scene = viewer.scene;
-var canvas = viewer.canvas;
-canvas.setAttribute('tabindex', '0'); // needed to put focus on the canvas
-canvas.onclick = function() {
-       canvas.focus();
-};
-var ellipsoid = scene.globe.ellipsoid;
-var camera = viewer.camera;
-var controller = scene.screenSpaceCameraController;
 
-var turnRate = 0.2;
+
+
+
+// reutn map var
+// key : description, value : avg z coordination for each key.
+function getFloorsData(edges){
+    var floors = new Array();
+    var num = 0;
+    
+    floors[num] = new Array();
+    floors[num].push(edges[0]);
+    
+    var nowDescription = edges[0].description;
+    
+    for(i = 0 ; i < edges.length; i++){
+        if (edges[i].description != nowDescription){
+            num++;
+            floors[num] = new Array();
+            nowDescription = edges[i].description;
+        }
+        floors[num].push(edges[i]);
+    }
+    
+    
+    var zCoordinationForEachFloor = new Map();
+    for(i = 0; i < num; i++){
+        var sum = 0;
+        for(j = 0 ; j < floors[i].length; j++){
+            sum += floors[i][j].stateMembers[0].coordinates[2];
+            sum += floors[i][j].stateMembers[1].coordinates[2];
+        }
+        zCoordinationForEachFloor.put(floors[i][0].description, sum/(floors[i].length*2));
+    }
+    
+    return zCoordinationForEachFloor;
+}
+
+
+
+
+
+// onclick functions for btn
 function onClickLeftTurnBtn(){
 //    console.log("onClickLeftTurnBtn called");
     camera.lookLeft(turnRate);
 }
+
 function onClickRightTurnBtn(){
 //    console.log("onClickRightTurnBtn called");
     camera.lookRight(turnRate);
 }
+
 function onClickUpTurnBtn(){
 //    console.log("onClickUpTurnBtn called");
     camera.lookUp(turnRate);
 }
+
 function onClickBackToOrigianlViewBtn(){
 //    console.log("onClickBackToOrigianlViewBtn called");
     camera.setView({
@@ -212,6 +231,118 @@ function onClickBackToOrigianlViewBtn(){
         }
     });
 }
+
+function onClickZoomInBtn(){
+    camera.zoomIn(0.2);
+}
+
+function onClickZoomOutBtn(){
+    camera.zoomOut(0.2);
+}
+
+
+
+var nowRoom = null;
+var nowSrc = new coordination();
+var nowDst = new coordination();
+var nowT = 0;
+
+
+function getMostSimilarNode(nowSrc, dstCandidate){
+    return dstCandidate[0];
+}
+
+function getNewDst(nowSrc){
+    
+    // fillter condition, dst or src is nowSrc
+    function isConnectedToNowSrc(value){
+        var returnVal = false;
+        
+        if(value.connects[0] == nowSrc.href ){
+            returnVal = true;
+        }
+        else if(value.connects[1] == nowSrc.herf ) {
+            returnVal = true;
+        }
+        return returnVal;
+    }
+    
+    var filteredTransitionMember = new Array();
+    filteredTransitionMember = edges.filter(isConnectedToNowSrc);
+    console.log(filteredTransitionMember);
+    
+    var dstCandidate = new Array();
+    for(var i = 0 ; i < filteredTransitionMember.length; i++){
+        if(filteredTransitionMember[i].connects[0] == nowSrc.href ){
+            var tmpCoor = new coordination(filteredTransitionMember[i].stateMembers[0].coordinates[0],
+                                               filteredTransitionMember[i].stateMembers[0].coordinates[1],
+                                               filteredTransitionMember[i].stateMembers[0].coordinates[2]);
+            tmpCoor.href = filteredTransitionMember[i].connects[1];
+            dstCandidate.push(tmpCoor);
+        }
+        else{
+            var tmpCoor = new coordination(filteredTransitionMember[i].stateMembers[1].coordinates[0],
+                                               filteredTransitionMember[i].stateMembers[1].coordinates[1],
+                                               filteredTransitionMember[i].stateMembers[1].coordinates[2]);
+            tmpCoor.href = filteredTransitionMember[i].connects[0];
+            dstCandidate.push(tmpCoor);
+        }
+    }
+    console.log(dstCandidate);
+
+    var newDst = getMostSimilarNode(nowSrc, dstCandidate);
+    return newDst;
+}
+
+function onClickMoveFrontBtn(){
+    
+    if ( nowT == 0 ){// camera is on src node, find new dst
+        console.log("nowT == 0");
+        nowDst = getNewDst(nowSrc);
+    }
+    else if ( nowT == 1){ // camera is on dst node, find new dst
+        console.log("nowT == 1");
+        nowSrc = nowDst;
+        nowDst = getNewDst(nowDst);
+    }
+
+    if( true ){  //camera see src direction
+            moveToSrc(nowSrc, nowDst, nowT);
+            nowT -= moveRate;
+        }
+        else{ //camera see dst direction
+            moveToDst(nowSrc, nowDst, nowT);
+            nowT += moveRate;
+        }
+    
+}
+
+function onClickMoveBackwardBtn(){
+    
+    if ( nowT == 0 ){ // camera is on src node, find new dst
+        nowDst = getNewDst(nowSrc);
+    }
+    else if ( nowT == 1){ // camera is on dst node, find new dst
+        nowSrc = nowDst;
+        nowDst = getNewDst(nowDst);
+    }
+    else{ // camera is on edges, move backward
+        if( true ){ //camera see src direction
+            moveToDst(nowSrc, nowDst, nowT);
+            nowT += moveRate;
+        }
+        else{ //camera see dst direction
+            moveToSrc(nowSrc, nowDst, nowT);
+            nowT -= moveRate;
+        }
+    }
+}
+
+
+
+
+
+
 
 // make dom data for tree view
 var sectionData = new Map(); // key description, value map room
@@ -237,6 +368,11 @@ function makeSectionData(edges){
     }
 }
 
+
+
+
+
+// functions for tree view
 function makeTreeView(sectionData){
     var tree = document.getElementById('treeview_for_floor');
     
@@ -244,6 +380,7 @@ function makeTreeView(sectionData){
     firstNode.innerHTML = sectionData.getKeyByIndex(0);
         
 }
+
 function findCoordinationById(section, roomHref){
     console.log(section, roomHref);
     
@@ -258,14 +395,13 @@ function onClickTreeView(spanValue){
 //    var node = tree.element.find('li.active');
     
 //    var pickedRoom = findCoordinationById(node.id);
-    var pickedRoom = findCoordinationById(spanValue.innerHTML, '#R3737');
-    
+    var pickedRoom = findCoordinationById(spanValue.innerHTML, '#R3737'); // test data
     
     camera.flyTo({
         destination : new Cesium.Cartesian3(
             pickedRoom.x,
             pickedRoom.y,
-            pickedRoom.z+2
+            pickedRoom.z+zfactor
         ),
         orientation: {
             heading : Cesium.Math.toRadians(90.0),
@@ -273,63 +409,34 @@ function onClickTreeView(spanValue){
             roll : 0.0
         }
     });
+    
+    nowRoom = '#R3737';
+    nowSrc = pickedRoom;
+    nowSrc.href = '#R3737';
+    nowT = 0;
 }
 
 
-function navigate(nodes, edges){
-    var headingSpan = document.getElementById('heading');
-    var positionSpan = document.getElementById('position');
 
-//viewer.scene.preRender.addEventListener(function(scene, time) {
-//    headingSpan.innerHTML = Cesium.Math.toDegrees(camera.heading).toFixed(1);
-//    positionSpan.innerHTML = camera.position;
-//});
-    
-    console.log(edges);    
+
+
+function navigate(nodes, _edges){
+
+    edges = _edges;
+//    console.log(_edges);
     
     makeSectionData(edges);
-    console.log(sectionData);
-    
     makeTreeView(sectionData);
     
-//    var zCoordinationForEachFloor = new Map();
-//    zCoordinationForEachFloor = getFloorsData(edges);
-//    
-//    console.log(edges[1].stateMembers[1].coordinates[0], edges[1].stateMembers[1].coordinates[1], zCoordinationForEachFloor.get(edges[1].description));
-
-    
-    // move camera to start node
-    var startNode = 100;
-    var zfactor = 5;
-    
-//    camera.flyTo({
-//        destination : new Cesium.Cartesian3(
-//            edges[startNode].stateMembers[0].coordinates[0],
-//            edges[startNode].stateMembers[0].coordinates[1],
-//            edges[startNode].stateMembers[0].coordinates[2]
-//        ),
-//        orientation: {
-//            heading : Cesium.Math.toRadians(90.0),
-//            pitch : Cesium.Math.toRadians(0),
-//            roll : 0.0
-//        }
-//    });
-
-    
-//    camera.position = new Cesium.Cartesian3(
-//            edges[startNode].stateMembers[0].coordinates[0],
-//            edges[startNode].stateMembers[0].coordinates[1],
-//            edges[startNode].stateMembers[0].coordinates[2]);
-//    
-//    camera.setView({
-//        orientation: {
-//            heading : Cesium.Math.toRadians(90.0),
-//            pitch : Cesium.Math.toRadians(0),
-//            roll : 0.0
-//        }
-//    });
     
     viewer.flyTo(viewer.entities);
+    
+    // disable the default event handlers
+    scene.screenSpaceCameraController.enableRotate = false;
+//    scene.screenSpaceCameraController.enableTranslate = false;
+    scene.screenSpaceCameraController.enableZoom = false;
+    scene.screenSpaceCameraController.enableTilt = false;
+    scene.screenSpaceCameraController.enableLook = false;
     
     // set onclick path
     var handler = new Cesium.ScreenSpaceEventHandler(canvas);

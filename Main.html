@@ -28,6 +28,15 @@
             display: block;
             color: white;
         }
+        .arrow{
+            height: 100px;
+            width : auto;
+            align-content: center;
+            position : absolute;
+            left : 50%;
+            bottom : 10%;
+            display : block;
+        }
     </style>
   </head>
     
@@ -51,7 +60,7 @@
               'sceneModePicker': false,
               'infoBox': false,
               'baseLayerPicker': false,
-              'shadows': false
+              'shadows': true
           });
 
       </script>
@@ -61,18 +70,10 @@
       
       <div class = "joystick">
           <table style="color:white">
-<!--
-              <tr>
-                  <td>Heading: <span id="heading"></span>°</td>
-              </tr>
-              <tr>
-                <td>Position: <span id="position"></span></td>
-              </tr>
--->
               <tr>
                 <td><button class="cesium-button cesium-button-toolbar"
-                            id="turnUptBtn"
-                            onclick="onClickUpTurnBtn()"
+                            id="moveFront"
+                            onclick="onClickMoveFrontBtn()"
                         >▲</button></td>
               </tr>
               <tr>
@@ -86,7 +87,24 @@
                             id="turnRightBtn"
                             onclick="onClickRightTurnBtn()">▶</button></td>
               </tr>
+              <tr>
+                <td><button class="cesium-button cesium-button-toolbar"
+                            id="moveBackward"
+                            onclick="onClickMoveBackwardBtn()"
+                        >▼</button></td>
+              </tr>
+              <tr>
+                <td><button class="cesium-button cesium-button-toolbar"
+                            id="zoomIn"
+                            onclick="onClickZoomInBtn()"
+                        >+</button></td>
+                  <td><button class="cesium-button cesium-button-toolbar"
+                            id="zoomOut"
+                            onclick="onClickZoomOutBtn()"
+                        >-</button></td>
+              </tr>
           </table>
+          
       </div>
       
       <div class = "treeView"
@@ -100,5 +118,6 @@
                         onclick = "onClickTreeView(this)"></span></li>
           </ul>
       </div>
+      
     </body>
 </html>

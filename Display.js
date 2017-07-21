@@ -224,7 +224,6 @@ loadJSON(function(response) {
             flat : true,
             translucent : false
         }),
-//        shadows : Cesium.ShadowMode.ENABLED
     }));
     
     scene.primitives.add(new Cesium.Primitive({
@@ -241,7 +240,6 @@ loadJSON(function(response) {
                 lineWidth  : 1000
             }
         }),
-//        shadows : Cesium.ShadowMode.ENABLED
     }));
 
 
