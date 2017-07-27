@@ -200,7 +200,7 @@ loadJSON(function(response) {
                       perPositionHeight : true
                   }),
                   attributes : {
-                      color : Cesium.ColorGeometryInstanceAttribute.fromColor(roomColor[Math.floor(Math.random()*roomColor.length)].withAlpha(0.5))
+                      color : Cesium.ColorGeometryInstanceAttribute.fromColor(roomColor[i%4])
                   }
               }));
             
