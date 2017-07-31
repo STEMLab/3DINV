@@ -87,7 +87,12 @@
 			'sceneModePicker': false,
 			'infoBox': false,
 			'baseLayerPicker': false,
-			'shadows': true
+			'shadows': true,
+			'imageryProvider' : new Cesium.BingMapsImageryProvider({
+                url: 'https://dev.virtualearth.net',
+                mapStyle: Cesium.BingMapsStyle.AERIAL_WITH_LABELS,
+                key: 'As8GWztcV0X1qeg5hpbSpih15gakk5UrmTRSGTU7FYMSnDGobdccMVQW2N-5_pOt'
+            })
 		});
 
 	</script>
