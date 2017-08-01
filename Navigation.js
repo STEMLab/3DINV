@@ -12,7 +12,7 @@ var camera = viewer.camera;
 var controller = scene.screenSpaceCameraController;
 
 var turnRate = 0.2;
-var moveRate = 0.2;
+var moveRate = 0.5;
 var zfactor = 2;
 
 var currentEdge = -1; // test data
@@ -86,58 +86,6 @@ function RoomInfo(_description, _x, _y, _z, _href){
 
 
 
-
-
-
-
-
-
-
-
-
-    function getHeading(direction, up) {
-        var heading;
-        if (!Cesium.Math.equalsEpsilon(Math.abs(direction.z), 1.0, Cesium.Math.EPSILON3)) {
-            heading = Math.atan2(direction.y, direction.x) - Cesium.Math.PI_OVER_TWO;
-        } else {
-            heading = Math.atan2(up.y, up.x) - Cesium.Math.PI_OVER_TWO;
-        }
-		
-        return Cesium.Math.TWO_PI - Cesium.Math.zeroToTwoPi(heading);
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // functions and variables for moving camera -------------------------------------------------------------
 function moveState(){
 	this.srcHref = null;
@@ -175,86 +123,25 @@ function getDirection(src, dst, now, heading){
 	// src : coordinate of destination
 	// now : coordinate of camera
 	// heading : camera heading
-	
-//	camera.direction = new Cesium.Cartesian3(src.x, src.y, src.z);
-//	console.log(camera.direction);
-//	console.log(src);
-//	console.log(dst);
-//	console.log(now);
-//	
-	
-	// Convert the coordinates of src and dst using the coordinates of now as the new origin.
-    var transSrc = new coordination();
-    var transDst = new coordination();
-	var transDir = new coordination();
-    
-    transSrc.x = src.x - now.x;
-    transSrc.y = src.y - now.y;
-	
-    transDst.x = dst.x - now.x;
-    transDst.y = dst.y - now.y;
-	
-	transDir.x = camera.direction.x - now.x;
-	transDir.y = camera.direction.y - now.y;
-	
-//	console.log("transfromed src : "+transSrc.x+", "+transSrc.y+", transfromed dst : "+transDst.x+", "+transDst.y);
-    
-	// Calculates the angle between the x-axis and src and the angle between the x-axis and dst.
-//	var srcAngle = Math.atan(transSrc.y / transSrc.x) * (180 / Math.PI);
-//    var dstAngle = Math.atan (transDst.y / transDst.x) * (180 / Math.PI);
-//	var dirAngle = Math.atan (transDir.y / transDir.x) * (180 / Math.PI);
-//	
-	
+		
 	var srcAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(src.x, src.y, src.z), camera.direction);
 	var dstAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(dst.x, dst.y, dst.z), camera.direction);
 	
 //	console.log("srcAngle:", srcAngle, "dstAngle:", dstAngle);
 	
-	var direction; // dst : 1, src : 0	
-	if(srcAngle < dstAngle) direction = 0;
-	else direction = 1;
+	var threshold = 1.568;
 	
-//	console.log("srcAngle :", 
-//				Cesium.Math.toDegrees(Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(src.x, src.y, src.z), camera.direction)));
-//	
-//	console.log("dstAngle :", 
-//				Cesium.Math.toDegrees(Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(dst.x, dst.y, dst.z), camera.direction)));
-//	
+	var direction; // dst : 1, src : 0
 	
-				
+	var diff = srcAngle-dstAngle;
 	
+	if( diff < 0 && srcAngle < threshold )  direction = 0;
+	else if( diff > 0 && dstAngle > threshold ) direction = 1;
+	else direction = -1;
 	
-//	var srcHeading = getHeading(src, camera.up);
-//	var dstHeading = getHeading(dst, camera.up);
-//	
-//	console.log("srcHeading : ", srcHeading, "dstHeading : ", dstHeading);
-//	
-//	
-//	
-//	console.log(srcAngle%360, dstAngle%360, dirAngle%360, camera.heading, getHeading(camera.direction, camera.up));
-//    
-//	
-//	// If there is a heading between boundaryStart and boundaryEnd,
-//	// the camera can think of looking at the source direction.
-//    var boundaryStart = srcAngle+90;
-//    var boundaryEnd = dstAngle+90;
-//    
-//    var direction; // dst : 1, src : 0
-//    
-//    if(boundaryStart < boundaryEnd){
-//        if(boundaryStart <= heading && heading < boundaryEnd) direction = 0;
-//        else direction = 1;
-//    }
-//    else{
-//        if(boundaryStart <= heading || heading < boundaryEnd) direction = 0;
-//        else direction = 1;
-//    }
-//	
-//	console.log("srcAngle : "+srcAngle+", dstAngle : "+dstAngle+", heading : "+heading );
-//	console.log("boundaryStart : "+boundaryStart+", boundaryEnd : "+boundaryEnd );
-    
-    if(direction == 0)  console.log("go src");
-    else console.log("go dst");
+//    if     (direction == 0)  console.log("go ", nowMoveState.srcHref);
+//    else if(direction == 1)  console.log("go ", nowMoveState.dstHref);
+//	else                     console.log("under threshold");
     
     return direction;
 }
@@ -292,38 +179,38 @@ function moveToDst(src, dst, nowT){
     }
 }
 
-function getMostSimilarNode(dstCandidate, heading){
+function getMostSimilarNode(dstCandidate){
     // if click back btn heading is origin heading + 180
-    var transSrc = new coordination();
-    var transDstCandidate = new Array();
     var dstCandidateAngle = new Array();
+		
+	var nowAngle = Cesium.Cartesian3.angleBetween(camera.position, camera.direction);
+	console.log("nowAngle :", nowAngle);	
     
     for(var i = 0 ; i < dstCandidate.length; i++){
-        transDstCandidate.push(new coordination(dstCandidate[i].x - roomData.get(nowMoveState.srcHref).coordination.x,
-                                                dstCandidate[i].y - roomData.get(nowMoveState.srcHref).coordination.y,
-                                                0));
-        dstCandidateAngle.push(Math.atan(transDstCandidate[i].y / transDstCandidate[i].x) * (180 / Math.PI))
+		var tmpAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(dstCandidate[i].x,
+																			dstCandidate[i].y, 
+																			dstCandidate[i].z), 
+													  camera.direction);
+		console.log("nowAngle :", nowAngle, "tmpAngle :", tmpAngle, "differ :", Math.abs(tmpAngle-nowAngle));
+		dstCandidateAngle.push(tmpAngle);
     }
-    
-    var heading = Cesium.Math.toDegrees(camera.heading);
-    var angleDiffer = new Array(); // angle difference between heading and dstCandidate
-    for(var i = 0 ; i < dstCandidateAngle.length; i++){
-        if(Math.abs(heading - dstCandidateAngle[i]) <= 10)
-            angleDiffer.push(Math.abs(heading - dstCandidateAngle[i]));
-        else
-            angleDiffer.push(999);
-    }
-    
-    var min = angleDiffer.reduce(function (previous, current){
-        return previous > current ? current : previous;
-    });
+	
+	
+	
+	var min = -9999;
+	if(dstCandidateAngle.length != 0){
+		min = dstCandidateAngle.reduce(function (previous, current){
+        	return previous > current ? current : previous;
+    	});
+	}
+
     	
-    var indexOfMin = angleDiffer.indexOf(min);
+    var indexOfMin = dstCandidateAngle.indexOf(min);
 	
 	if(indexOfMin == -1){
 		return null;
 	}
-    
+    console.log(dstCandidateAngle, dstCandidate[indexOfMin]);
     return dstCandidate[indexOfMin];
 }
 
@@ -344,21 +231,20 @@ function getDstCandidateArray(){
     
     var filteredTransitionMember = new Array();
     filteredTransitionMember = edges.filter(isConnectedToNowSrc);
-    console.log(filteredTransitionMember);
     
     var dstCandidate = new Array();
     for(var i = 0 ; i < filteredTransitionMember.length; i++){
         if(filteredTransitionMember[i].connects[0] == nowMoveState.srcHref ){
-            var tmpCoor = new coordination(filteredTransitionMember[i].stateMembers[0].coordinates[0],
-                                           filteredTransitionMember[i].stateMembers[0].coordinates[1],
-                                           filteredTransitionMember[i].stateMembers[0].coordinates[2],
+            var tmpCoor = new coordination(filteredTransitionMember[i].stateMembers[1].coordinates[0],
+                                           filteredTransitionMember[i].stateMembers[1].coordinates[1],
+                                           filteredTransitionMember[i].stateMembers[1].coordinates[2],
 										   filteredTransitionMember[i].connects[1]);
             dstCandidate.push(tmpCoor);
         }
         else{
-            var tmpCoor = new coordination(filteredTransitionMember[i].stateMembers[1].coordinates[0],
-                                           filteredTransitionMember[i].stateMembers[1].coordinates[1],
-                                           filteredTransitionMember[i].stateMembers[1].coordinates[2],
+            var tmpCoor = new coordination(filteredTransitionMember[i].stateMembers[0].coordinates[0],
+                                           filteredTransitionMember[i].stateMembers[0].coordinates[1],
+                                           filteredTransitionMember[i].stateMembers[0].coordinates[2],
 										   filteredTransitionMember[i].connects[0]);
             dstCandidate.push(tmpCoor);
         }
@@ -368,12 +254,12 @@ function getDstCandidateArray(){
 	return dstCandidate;
 }
 
-function getNewDst(heading){
+function getNewDst(){
     
 	var dstCandidate = getDstCandidateArray();
-	var newDstCoordination = getMostSimilarNode(dstCandidate, heading);
+	var newDstCoordination = getMostSimilarNode(dstCandidate);
 	
-	return newDstCoordination.href;
+	return newDstCoordination;
 }
 
 
@@ -462,6 +348,11 @@ function makeRoomDataToJson(){
 
 function onClickTreeView(roomHref){
     var pickedRoom = roomData.get(roomHref[0]);
+	
+	if(pickedRoom == null){
+		// open lower tree
+	}
+	
 	console.log(pickedRoom);
 	
 	nowMoveState.srcHref = roomHref[0];
@@ -512,75 +403,97 @@ function onClickZoomOutBtn(){
     camera.zoomOut(0.2);
 }
 
-function onClickMoveFrontBtn(){
-//	console.log("nowMoveState:", nowMoveState);
-    
-    if ( nowMoveState.T == 0 ){// camera is on src node, find new dst
+
+function checkAndAssignDst(){
+	
+	if ( nowMoveState.T == 0 ){// camera is on src node, find new dst
         console.log("now on src");
-        nowMoveState.dstHref = getNewDst(Cesium.Math.toDegrees(camera.heading));
+		
+		var tmp = getNewDst();
+		if(tmp != null) nowMoveState.dstHref = tmp.href;
+		else nowMoveState.dstHref = null;
     }
+	
 	else if ( nowMoveState.T == 1){ // camera is on dst node, find new dst
         console.log("now on dst");
 		nowMoveState.srcHref = nowMoveState.dstHref;
-        nowMoveState.dstHref = getNewDst(Cesium.Math.toDegrees(camera.heading));
+		
+		var tmp = getNewDst();
+		if(tmp != null) nowMoveState.dstHref = tmp.href;
+		else nowMoveState.dstHref = null;
 		nowMoveState.T = 0;
 		
     }
+}
+
+function onClickMoveFrontBtn(){
+	
+	checkAndAssignDst();
     
     var now = new coordination(camera.position.x, camera.position.y, camera.position.z);
+	
 	if(nowMoveState.dstHref != null){
-		if( getDirection(roomData.get(nowMoveState.srcHref).coordination,
-						 roomData.get(nowMoveState.dstHref).coordination,
-						 now,
-						 Cesium.Math.toDegrees(camera.heading)) == 0 ){  //camera see src direction
+		var direction = getDirection(roomData.get(nowMoveState.srcHref).coordination,
+									 roomData.get(nowMoveState.dstHref).coordination,
+									 now,
+									 Cesium.Math.toDegrees(camera.heading));
+		
+		if( direction == 0 && nowMoveState.T != 0 ){  //camera see src direction
             moveToSrc(roomData.get(nowMoveState.srcHref).coordination,
 					  roomData.get(nowMoveState.dstHref).coordination,
 					  nowMoveState.T);
             nowMoveState.T -= moveRate;
 		}
-		else{ //camera see dst direction
+		else if( direction == 1 && nowMoveState.T != 1 ){ //camera see dst direction
 			moveToDst(roomData.get(nowMoveState.srcHref).coordination,
 					  roomData.get(nowMoveState.dstHref).coordination,
 					  nowMoveState.T);
 			nowMoveState.T += moveRate;
 		}
-	}    
+		else if( direction == -1){ }
+		else {
+			console.log("error! ");
+		}
+	}
+	
+	console.log("nowMoveState:", nowMoveState);
 }
 
 function onClickMoveBackwardBtn(){
-//	console.log("nowMoveState:", nowMoveState);
 	
-	if ( nowMoveState.T == 0 ){// camera is on src node, find new dst
-        nowMoveState.dstHref = getNewDst(Cesium.Math.toDegrees(camera.heading)+180);
-        
-    }
-	else if ( nowMoveState.T == 1){ // camera is on dst node, find new dst
-		nowMoveState.srcHref = nowMoveState.dstHref;
-        nowMoveState.dstHref = getNewDst(Cesium.Math.toDegrees(camera.heading)+180);
-		nowMoveState.T = 0;
-		
-    }
+	checkAndAssignDst();
     	
 	var now = new coordination(camera.position.x, camera.position.y, camera.position.z);
+	
 	if(nowMoveState.dstHref != null){
-		if( getDirection(roomData.get(nowMoveState.srcHref).coordination,
-						 roomData.get(nowMoveState.dstHref).coordination,
-						 now,
-						 Cesium.Math.toDegrees(camera.heading)) == 1 ){  //camera see src direction
-            moveToSrc(roomData.get(nowMoveState.srcHref).coordination,
-					  roomData.get(nowMoveState.dstHref).coordination,
-					  nowMoveState.T);
-            nowMoveState.T += moveRate;
-		}
-		else{ //camera see dst direction
+		var direction = getDirection(roomData.get(nowMoveState.srcHref).coordination,
+									 roomData.get(nowMoveState.dstHref).coordination,
+									 now,
+									 Cesium.Math.toDegrees(camera.heading));
+		console.log(direction)
+		
+		if( direction == 0 && nowMoveState.T != 1 ){ 
 			moveToDst(roomData.get(nowMoveState.srcHref).coordination,
 					  roomData.get(nowMoveState.dstHref).coordination,
 					  nowMoveState.T);
-			nowMoveState.T -= moveRate;
+			nowMoveState.T += moveRate;
+		}
+		else if( direction == 1 && nowMoveState.T != 0 ){ 
+            moveToSrc(roomData.get(nowMoveState.srcHref).coordination,
+					  roomData.get(nowMoveState.dstHref).coordination,
+					  nowMoveState.T);
+            nowMoveState.T -= moveRate;
+		}
+		else if( direction == -1 ){
+			
+		}
+		else{
+			console.log("error! ", direction);
 		}
 	} 
+	
+	console.log("nowMoveState:", nowMoveState);
 }
-
 
 
 
@@ -593,6 +506,8 @@ function navigate(nodes, _edges){
 	settingTreeView();
 
     viewer.flyTo(viewer.entities);
+	
+	console.log("maximum :",scene.maximumAliasedLineWidth);
     
     // disable the default event handlers
     scene.screenSpaceCameraController.enableRotate = false;
@@ -600,42 +515,6 @@ function navigate(nodes, _edges){
     scene.screenSpaceCameraController.enableZoom = false;
     scene.screenSpaceCameraController.enableTilt = false;
     scene.screenSpaceCameraController.enableLook = false;
-    
-    // set onclick path
-//    var handler = new Cesium.ScreenSpaceEventHandler(canvas);
-//
-//    handler.setInputAction(function(movement) {
-//        var feature = viewer.scene.pick(movement.position);
-//        if (Cesium.defined(feature)) {
-//            if (Cesium.defined(feature['id']['polyline'])) {
-//                var src = new coordination;
-//                src.x = feature['id']['polyline']['positions'].getValue(0)[0].x;
-//                src.y = feature['id']['polyline']['positions'].getValue(0)[0].y;
-//                src.z = feature['id']['polyline']['positions'].getValue(0)[0].z;
-//                var dst = new coordination;
-//                dst.x = feature['id']['polyline']['positions'].getValue(0)[1].x;
-//                dst.y = feature['id']['polyline']['positions'].getValue(0)[1].y;
-//                dst.z = feature['id']['polyline']['positions'].getValue(0)[1].z;
-//                var now = new coordination;
-//                now.x = camera.position.x;
-//                now.y = camera.position.y;
-//                now.z = camera.position.x;
-//
-//                var direction = getDirection(src, dst, now, Cesium.Math.toDegrees(camera.heading));
-//                var nowT = getT(src, dst, now);
-//
-//                if(direction == 0){
-//                    moveToSrc(camera, src, dst, nowT);
-//                } else if(direction == 1){
-//                    moveToDst(camera, src, dst, nowT);
-//                } else{
-//                    console.log("error! wrong direction "+direction);
-//                }
-//            }
-//        }else{
-//            console.log("undefined");
-//        }
-//    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);   
 }
 
 

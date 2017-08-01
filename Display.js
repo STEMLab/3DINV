@@ -128,7 +128,7 @@ loadJSON(function(response) {
           csmObject.surfaceMember.push(smObject);
       }
 
-      // Filling the array with the cell space member instances
+      // Filling the array with the cell space member instancesBut the problem with outline has not been solved yet.
       cellSpaceMembers.push(csmObject);
 
     }
@@ -222,7 +222,8 @@ loadJSON(function(response) {
         appearance : new Cesium.PerInstanceColorAppearance({
             faceForward : true,
             flat : true,
-            translucent : false
+            translucent : false,
+			closed : false
         }),
     }));
     
@@ -235,11 +236,9 @@ loadJSON(function(response) {
                     enabled : true,
                     func : Cesium.DepthFunction.LESS
                 },
-                depthMask : false,
-                blending : Cesium.BlendingState.ALPHA_BLEND,
-                lineWidth  : 1000
+				lineWidth : Math.min(3.0, viewer.scene.maximumAliasedLineWidth)
             }
-        }),
+		})
     }));
 
 
@@ -379,11 +378,12 @@ loadJSON(function(response) {
             ],
           followSurface : new Cesium.ConstantProperty(false),
           width : new Cesium.ConstantProperty(20),
-          distanceDisplayCondition : new Cesium.DistanceDisplayCondition(0, 10.0),
+          distanceDisplayCondition : new Cesium.DistanceDisplayCondition(0, 8.0),
           material : Cesium.Color.BLACK
         }
       });
     }
+	
     
     navigate(nodes, edges);
 });
