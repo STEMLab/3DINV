@@ -23,7 +23,8 @@ loadJSON(function(response) {
         WorldWind.Logger.setLoggingLevel(WorldWind.Logger.LEVEL_WARNING);
 
         // Create the World Window in a canvas named "canvasOne".
-        var wwd = new WorldWind.WorldWindow("canvasOne");
+//        var wwd = new WorldWind.WorldWindow("canvasOne");
+		var wwd = new WorldWind.WorldWindow("canvasOne", new WorldWind.ZeroElevationModel());
 
         // Define layers to populate the World Window
         var layers = [

@@ -6,7 +6,6 @@ function navigate(_pathPositionsArray, _wwd){
 	
 	settingTreeView();   
 	
-
     wwd = _wwd;
 	pathPositionsArray = _pathPositionsArray;
 	
@@ -14,6 +13,7 @@ function navigate(_pathPositionsArray, _wwd){
 }
 
 function moveNavigator(position){
+	var navi = new Navigator.
 	wwd.navigator.lookAtLocation.latitude = position.latitude;
 	wwd.navigator.lookAtLocation.longitude = position.longitude;
 	wwd.navigator.range = position.altitude;
@@ -31,14 +31,25 @@ function onClickRightTurnBtn(){
 
 function onClickBackToOrigianlViewBtn(){
     console.log("onClickBackToOrigianlViewBtn called");
-	console.log(pathPositionsArray[1000][0]);
+	console.log(pathPositionsArray[2000][0]);
 	
-	wwd.goTo(new WorldWind.Position(pathPositionsArray[1000][0].latitude,
-									pathPositionsArray[1000][0].longitude,
-									pathPositionsArray[1000][0].altitude));
+	moveNavigator(pathPositionsArray[500][0]);
+	
+//	var goToA = new WorldWind.GoToAnimator(wwd);
+//	goToA.goTo(new WorldWind.Position.fromRadians(pathPositionsArray[2000][0].latitude,
+//									pathPositionsArray[2000][0].longitude,	
+//									pathPositionsArray[2000][0].altitude));
+	
+//	var newPosition = new WorldWind.Position(pathPositionsArray[2000][0].latitude,
+//														 pathPositionsArray[2000][0].longitude,
+//														 101);
+//	console.log(newPosition);
+	
+//	wwd.goTo(newPosition);
 	wwd.navigator.heading = 0;
 	wwd.navigator.roll = 0;
-	wwd.navigator.tilt  = 80;
+	wwd.navigator.tilt  = 85;
+	
 	console.log(wwd.navigator.currentState());
 
 
