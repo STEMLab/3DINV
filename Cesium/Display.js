@@ -7,7 +7,7 @@ function loadJSON(callback) {
 
     var xobj = new XMLHttpRequest();
     xobj.overrideMimeType("application/json");
-    xobj.open('GET', 'boxs.json', true);
+    xobj.open('GET', 'sample_data_lwm_3d.json', true);
     xobj.onreadystatechange = function() {
         // When response is ready
         if (xobj.readyState == 4 && xobj.status == 200) {
@@ -195,7 +195,6 @@ loadJSON(function(response) {
     for (var i = 0; i < cellSpaceMembers.length; i++) {
         for (var j = 0; j < cellSpaceMembers[i].surfaceMember.length; j++) {
               instances.push(new Cesium.GeometryInstance({
-<<<<<<< HEAD:Display.js
                   geometry : new Cesium.PolygonGeometry({
                       polygonHierarchy : new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates)),
                       perPositionHeight : true
@@ -214,16 +213,6 @@ loadJSON(function(response) {
                     color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.BLACK)
                 }
             }));
-=======
-                                  geometry : new Cesium.PolygonGeometry({
-                                    polygonHierarchy : new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates)),
-                                    perPositionHeight : true
-                                  }),
-                                   attributes : {
-                                     color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.WHITE.withAlpha(1))
-                                   }
-                            }));
->>>>>>> master:Cesium/Display.js
         }
     }
     
@@ -253,7 +242,7 @@ loadJSON(function(response) {
     }));
 
 
-    //----------------------------------------Working on the network elements----------------------------------------------//
+    // Working on the graph elements
     // State Member Class
     function stateMember(coordinates){
       this.coordinates = coordinates; // Array of coordinates
@@ -368,6 +357,7 @@ loadJSON(function(response) {
 
       }
 
+
     }
 
     // Displaying the edges
@@ -398,7 +388,4 @@ loadJSON(function(response) {
     navigate(nodes, edges);
 });
 
-    //coordToCSV(cellSpaceMembers);
-    //networkToCSV(edges);
-    Navigation(edges,nodes,cellSpaceMembers);
 
