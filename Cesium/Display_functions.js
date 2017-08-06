@@ -7,6 +7,7 @@ function abstractCoordination(value, object) {
 	var X = value[0];
 	object.coordinates.push(X);
 
+
 	// Test if X is maximum or minimum
 	if (X > max_X) {
 		max_X = X;
@@ -78,12 +79,12 @@ function getGeometry2DSurfaceMenber(csm, csmObject) {
 
 	// Number of coordinates of the surface member
 	var coordLen = ar.value.posOrPointPropertyOrPointRep.length;
-	
+
 	// Loop through the coordinates of a surfaceMember
 	for (var i = 0; i < coordLen; i++) {
 		arObject = abstractCoordination(ar.value.posOrPointPropertyOrPointRep[i].value.value, arObject);
 	}
-	
+
 	csmObject.surfaceMember.push(arObject);
 
 	return csmObject;
@@ -175,15 +176,16 @@ function setAngle(_angle) {
 
 }
 
+function setPosition(_position) {
+	position = _position;
+}
+
 function setCenterOfBuilding() {
 	center_X = (min_X + max_X) / 2;
 	center_Y = (min_Y + max_Y) / 2;
 }
 
-function setGeometryInstanceAndSaveTextForSketchUp() {
-	var str = String();
-	str += "model = Sketchup.active_model;";
-
+function setGeometryInstance() {
 	// Loop through cell space members and creating geometry instances
 	for (var i = 0; i < cellSpaceMembers.length; i++) {
 		for (var j = 0; j < cellSpaceMembers[i].surfaceMember.length; j++) {
@@ -206,26 +208,217 @@ function setGeometryInstanceAndSaveTextForSketchUp() {
 					color: Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.BLACK)
 				}
 			}));
+		}
+	}
 
+}
+
+function saveTextFileForSketchUp(faceCount) {
+	var str = String();
+
+	// Loop through cell space members and creating geometry instances
+	for (var i = 0; i < cellSpaceMembers.length; i++) {
+		for (var j = 0; j < cellSpaceMembers[i].surfaceMember.length; j++) {
 			var arr = Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates);
+			str += "pts = [];"
 			for (var k = 0; k < arr.length; k++) {
-				str += "pt" + k + "=[" + arr[k].x + "," + arr[k].y + "," + arr[k].z + "]; ";
+				str += "pts[" + k + "]=[" + arr[k].x + "," + arr[k].y + "," + arr[k].z + "]; ";
 			}
-			str += "model.entities.add_face(";
-			for (var k = 0; k < arr.length; k++) {
-				str += "pt" + k;
-				if (k != arr.length - 1) {
-					str += ",";
-				}
-			}
-			str += "); "
+			str += "draw_face(entities, pts); "
 		}
 
-		if (i % 500 == 0) {
+		if (i % faceCount == 0) {
 			saveFile("text_file_" + i, str);
 			str = new String();
 		}
 	}
 
 	saveFile("text_fil_last", str);
+}
+
+function addInstancesToPrimitives() {
+	scene.primitives.add(new Cesium.Primitive({
+		geometryInstances: instances,
+		appearance: new Cesium.PerInstanceColorAppearance({
+			faceForward: true,
+			flat: true,
+			translucent: false,
+			closed: false
+		}),
+	}));
+}
+
+function addOutlineInstancesToPrimitives() {
+	scene.primitives.add(new Cesium.Primitive({
+		geometryInstances: outlineInstances,
+		appearance: new Cesium.PerInstanceColorAppearance({
+			flat: true,
+			renderState: {
+				depthTest: {
+					enabled: true,
+					func: Cesium.DepthFunction.LESS
+				},
+				lineWidth: Math.min(3.0, viewer.scene.maximumAliasedLineWidth)
+			}
+		})
+	}));
+}
+
+function setNodesFromStateMember(jsonresponse) {
+
+	// Extracting state members
+	var sm = jsonresponse.value.multiLayeredGraph.spaceLayers["0"].spaceLayerMember["0"].spaceLayer.nodes["0"].stateMember;
+
+
+	for (var i = 0; i < sm.length; i++) {
+
+		// Creating a state member instance
+		var stateMemberObject = new stateMember([]);
+
+		// X,Y,Z coordinates of a state member
+		var coordinates = sm[i].state.geometry.point.pos.value;
+
+		stateMemberObject.coordinates.push(coordinates[0], coordinates[1], coordinates[2]);
+
+		// Adding the state member to the nodes array
+		nodes.push(stateMemberObject);
+	}
+}
+
+function setEdgesFromTransitionMember(jsonresponse) {
+	// Extracting transition members
+	var tm = jsonresponse.value.multiLayeredGraph.spaceLayers["0"].spaceLayerMember["0"].spaceLayer.edges["0"].transitionMember;
+
+	// Loop through transition Members and extracting connection, description and state members of each transition member
+	for (var i = 0; i < tm.length; i++) {
+
+		// Array of connections of a transition member
+		var connects = [];
+
+		// Getting the href of each connection
+		for (var j = 0; j < tm[i].transition.connects.length; j++) {
+			connects.push(tm[i].transition.connects[j].href);
+		}
+
+		// Description of a transition member
+		var description;
+		if (tm[i].transition.description != null) {
+			description = tm[i].transition.description.value;
+		}
+		//        var description = tm[i].transition.description.value;
+
+
+		// Array of state members
+		var stateMembers = [];
+
+		// Getting coordinates of each state member
+		for (var k = 0; k < tm[i].transition.geometry.abstractCurve.value.posOrPointPropertyOrPointRep.length; k++) {
+			// Creating a state member instance
+			var smObject = new stateMember([]);
+			var coordinates = tm[i].transition.geometry.abstractCurve.value.posOrPointPropertyOrPointRep[k].value.value;
+			smObject.coordinates.push(coordinates[0], coordinates[1], coordinates[2]);
+			stateMembers.push(smObject);
+		}
+
+		// Creating a transition member instance
+		var transitionMemberObject = new transitionMember(connects, description, stateMembers);
+
+		// Adding the transition member to edges array
+		edges.push(transitionMemberObject);
+
+	}
+}
+
+function rotateNodes() {
+	// Applying translation and rotation to the nodes
+	for (var i = 0; i < nodes.length; i++) {
+
+		// Translating coordinates + converting the result to Cartesian3
+		var offset = new Cesium.Cartesian3(nodes[i].coordinates[0] - center_X,
+			nodes[i].coordinates[1] - center_Y,
+			nodes[i].coordinates[2] - min_Z);
+
+		// Applying rotation to the offset
+		var finalPos = Cesium.Matrix4.multiplyByPoint(orientation, offset, new Cesium.Cartesian3());
+
+		// Report offset to the actual position of LWM
+		var new_coord = Cesium.Matrix4.multiplyByPoint(ENU, finalPos, finalPos);
+
+		// Replacing the old coordinates by the new ones
+		nodes[i].coordinates[0] = new_coord.x;
+		nodes[i].coordinates[1] = new_coord.y;
+		nodes[i].coordinates[2] = new_coord.z;
+
+	}
+}
+
+function rotateEdges() {
+	// Applying translation and rotation to the edges
+	for (var i = 0; i < edges.length; i++) {
+
+		for (var j = 0; j < edges[i].stateMembers.length; j++) {
+
+
+			var offset = new Cesium.Cartesian3(edges[i].stateMembers[j].coordinates[0] - center_X,
+				edges[i].stateMembers[j].coordinates[1] - center_Y,
+				edges[i].stateMembers[j].coordinates[2] - min_Z);
+
+			var finalPos = Cesium.Matrix4.multiplyByPoint(orientation, offset, new Cesium.Cartesian3());
+
+			var new_coord = Cesium.Matrix4.multiplyByPoint(ENU, finalPos, finalPos);
+
+			edges[i].stateMembers[j].coordinates[0] = new_coord.x;
+			edges[i].stateMembers[j].coordinates[1] = new_coord.y;
+			edges[i].stateMembers[j].coordinates[2] = new_coord.z;
+		}
+	}
+}
+
+function displayEdges() {
+	// Displaying the edges
+	for (i = 0; i < edges.length; i++) {
+
+		var line = viewer.entities.add({
+			name: 'line ' + edges[i].connects,
+			polyline: {
+				positions: [
+            new Cesium.Cartesian3(
+						edges[i].stateMembers[0].coordinates[0],
+						edges[i].stateMembers[0].coordinates[1],
+						edges[i].stateMembers[0].coordinates[2]),
+            new Cesium.Cartesian3(
+						edges[i].stateMembers[1].coordinates[0],
+						edges[i].stateMembers[1].coordinates[1],
+						edges[i].stateMembers[1].coordinates[2])
+            ],
+				followSurface: new Cesium.ConstantProperty(false),
+				width: new Cesium.ConstantProperty(20),
+				distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8.0),
+				material: Cesium.Color.BLACK
+			}
+		});
+	}
+}
+
+function destroyClickedElement(event) {
+	document.body.removeChild(event.target);
+}
+
+function saveFile(fileName, str) {
+	var textToSave = str;
+	var textToSaveAsBlob = new Blob([textToSave], {
+		type: "text/plain"
+	});
+	var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
+	var fileNameToSaveAs = fileName;
+
+	var downloadLink = document.createElement("a");
+	downloadLink.download = fileNameToSaveAs;
+	downloadLink.innerHTML = "Download File";
+	downloadLink.href = textToSaveAsURL;
+	downloadLink.onclick = destroyClickedElement;
+	downloadLink.style.display = "none";
+	document.body.appendChild(downloadLink);
+
+	downloadLink.click();
 }

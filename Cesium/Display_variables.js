@@ -10,8 +10,16 @@ function surfaceMember(coordinates) {
 	this.coordinates = coordinates; //Array of surfaceMember coordinates
 }
 
-function GML_3_2_1_LinearRingType() {
-	this.posOrPointPropertyOrPointRep = new Array();
+// State Member Class
+function stateMember(coordinates) {
+	this.coordinates = coordinates; // Array of coordinates
+}
+
+// Transition member Class
+function transitionMember(connects, description, coordinates) {
+	this.connects = connects; // Array of href
+	this.description = description; // information about section and floor...
+	this.stateMembers = coordinates; // Array of state members, each state member has X,Y,Z coordinates
 }
 
 // Variables where the maximum coordinates will be stored
@@ -39,6 +47,7 @@ var ellipsoid = viewer.scene.globe.ellipsoid;
 var ENU = new Cesium.Matrix4(); // The object onto which to store the transformation result
 var angle = 0;
 var orientation;
+var position; // Center of Building
 
 
 // Drawing polygones using primitives
@@ -51,3 +60,11 @@ var roomColor = [Cesium.Color.fromBytes(227, 253, 253),
                  Cesium.Color.fromBytes(203, 241, 245),
                  Cesium.Color.fromBytes(166, 227, 233),
                  Cesium.Color.fromBytes(113, 201, 206)];
+
+
+
+// Array of nodes
+var nodes = [];
+
+// Array of edges
+var edges = [];
