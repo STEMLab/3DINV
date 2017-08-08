@@ -32,7 +32,7 @@ var min_X = 0;
 var min_Y = 0;
 var min_Z = 0;
 
-// Center of Lotte World Mall
+// Center of Buliding
 var center_X;
 var center_Y;
 
@@ -56,6 +56,8 @@ var scene = viewer.scene;
 // Array of instances
 var instances = [];
 var outlineInstances = [];
+
+// roomColors if you 
 var roomColor = [Cesium.Color.fromBytes(227, 253, 253),
                  Cesium.Color.fromBytes(203, 241, 245),
                  Cesium.Color.fromBytes(166, 227, 233),

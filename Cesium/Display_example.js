@@ -1,11 +1,16 @@
-// This script is for displaying Lotte World Mall in 3D using Cesium
-// The navigation tools are not included
-// you can find them in the Navigation.js file
+/*
+*
+* This script is for displaying Lotte World Mall in 3D using Cesium
+* functions and variables that using in this example are exesit in Display_variables.js, Display_functions.js.
+* If you have some file to diplay change 'sample_data_lwm_3d.json' to that file.
+*
+*/
+
 function loadJSON(callback) {
 
 	var xobj = new XMLHttpRequest();
 	xobj.overrideMimeType("application/json");
-	xobj.open('GET', 'addstair.json', true);
+	xobj.open('GET', 'sample_data_lwm_3d.json', true);
 	xobj.onreadystatechange = function () {
 		// When response is ready
 		if (xobj.readyState == 4 && xobj.status == 200) {
@@ -31,21 +36,22 @@ loadJSON(function (response) {
 	setCellSapceMembers(jsonresponse);
 	setCenterOfBuilding();
 	
+  
 	setPosition(new Cesium.Cartesian3.fromDegrees(129.082678, 35.234794, 0));
 
-	setAngle(0.63);// Rotation angle
+	setAngle(-1.5708);// Rotation angle
 	rotateCellSpaceMember(position);
 
-	setGeometryInstance();
+	setGeometryInstance_SAVE();
 	
 //	saveTextFileForSketchUp(700);
 
-	// Adding instances to primitives
+//	 Adding instances to primitives
 	addInstancesToPrimitives();
 	addOutlineInstancesToPrimitives();
 	
-
-
+//	importGLBFile(position, 'pnu_313_4.glb');
+	
 	// Working on the graph elements
 	setNodesFromStateMember(jsonresponse);
 	setEdgesFromTransitionMember(jsonresponse);
@@ -55,7 +61,7 @@ loadJSON(function (response) {
 
 
 	displayEdges();
-
+	
 
 	// call navigation setting function
 	setNavigatorUI();

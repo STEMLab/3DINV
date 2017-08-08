@@ -409,14 +409,7 @@ function disableDefalutEventHandlers(){
     scene.screenSpaceCameraController.enableLook = false;
 }
 
-function importGLBFile(_position, _uri){
-	viewer.entities.add({
-		position : _position,
-		model : {
-			uri : _uri
-		}
-	});
-}
+
 
 function setNavigatorUI(){
     	
@@ -427,7 +420,7 @@ function setNavigatorUI(){
 	viewer.flyTo(viewer.entities);
 		    
     // disable the default event handlers
-	disableDefalutEventHandlers();
+//	disableDefalutEventHandlers();
 }
 
 

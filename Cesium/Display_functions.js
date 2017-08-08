@@ -2,6 +2,7 @@ function setCellSpaceMemberLen(jsonresponse) {
 	cellSpaceMemberLen = jsonresponse.value.primalSpaceFeatures.primalSpaceFeatures.cellSpaceMember.length;
 }
 
+// Abstract coordinates from value and save it in object.coordinates
 function abstractCoordination(value, object) {
 	// Extracting X
 	var X = value[0];
@@ -38,6 +39,7 @@ function abstractCoordination(value, object) {
 	return object;
 }
 
+// Return surface member values from cellspaceMember when geometry is 3D.
 function getGeometry3DSurfaceMenber(csm, csmObject) {
 	// get surface MemberLen
 	surfaceMemberLen = csm.abstractFeature.value.geometry3D.abstractSolid.value.exterior.shell.surfaceMember.length;
@@ -66,6 +68,7 @@ function getGeometry3DSurfaceMenber(csm, csmObject) {
 	return csmObject;
 }
 
+// Return surface member values from cellspaceMember data when geometry is 2D.
 function getGeometry2DSurfaceMenber(csm, csmObject) {
 	// get surface MemberLen
 	surfaceMemberLen = csm.abstractFeature.value.geometry2D.abstractSurface.value.exterior.abstractRing.length;
@@ -86,10 +89,21 @@ function getGeometry2DSurfaceMenber(csm, csmObject) {
 	}
 
 	csmObject.surfaceMember.push(arObject);
+	//	console.log(csmObject);
+
+
+	//	var arCeilingsObject = extendCeilingsFor2D(10, csm);
+	//	var arWallsObject = extendWallsFor2D(10, csmObject);
+
+	//	csmObject.surfaceMember.push(arCeilingsObject);
+	//	csmObject.surfaceMember.push(arWallsObject);
+
+	//	console.log(csmObject);
 
 	return csmObject;
 }
 
+// Set CellSpaceMembers value from json data
 function setCellSapceMembers(jsonresponse) {
 	for (var i = 0; i < cellSpaceMemberLen; i++) {
 
@@ -138,7 +152,6 @@ function rotateCellSpaceMember(position) {
 		var csmLen = cellSpaceMembers[i].surfaceMember.length;
 
 		for (var j = 0; j < csmLen; j++) {
-
 			var smLen = cellSpaceMembers[i].surfaceMember[j].coordinates.length;
 
 			for (var k = 0; k < smLen; k += 3) {
@@ -158,7 +171,6 @@ function rotateCellSpaceMember(position) {
 				cellSpaceMembers[i].surfaceMember[j].coordinates[k] = new_coord.x;
 				cellSpaceMembers[i].surfaceMember[j].coordinates[k + 1] = new_coord.y;
 				cellSpaceMembers[i].surfaceMember[j].coordinates[k + 2] = new_coord.z;
-
 			}
 		}
 	}
@@ -185,7 +197,8 @@ function setCenterOfBuilding() {
 	center_Y = (min_Y + max_Y) / 2;
 }
 
-function setGeometryInstance() {
+
+function setGeometryInstance_SAVE() {
 	// Loop through cell space members and creating geometry instances
 	for (var i = 0; i < cellSpaceMembers.length; i++) {
 		for (var j = 0; j < cellSpaceMembers[i].surfaceMember.length; j++) {
@@ -193,10 +206,7 @@ function setGeometryInstance() {
 				geometry: new Cesium.PolygonGeometry({
 					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates)),
 					perPositionHeight: true
-				}),
-				attributes: {
-					color: Cesium.ColorGeometryInstanceAttribute.fromColor(roomColor[i % 4])
-				}
+				})
 			}));
 
 			outlineInstances.push(new Cesium.GeometryInstance({
@@ -210,7 +220,6 @@ function setGeometryInstance() {
 			}));
 		}
 	}
-
 }
 
 function saveTextFileForSketchUp(faceCount) {
@@ -237,16 +246,43 @@ function saveTextFileForSketchUp(faceCount) {
 }
 
 function addInstancesToPrimitives() {
-	scene.primitives.add(new Cesium.Primitive({
+	var material = new Cesium.Material({
+		fabric: {
+			type: 'Image',
+			uniforms: {
+				image: 'images.jpg'
+			}
+		}
+	});
+	
+	var tmpPrimitive = new Cesium.Primitive({
 		geometryInstances: instances,
 		appearance: new Cesium.PerInstanceColorAppearance({
 			faceForward: true,
 			flat: true,
 			translucent: false,
 			closed: false
-		}),
-	}));
+		})
+	});
+	
+	
+	
+	tmpPrimitive.appearance = new Cesium.MaterialAppearance();
+	tmpPrimitive.appearance.material = new Cesium.Material({
+		fabric: {
+			type: 'Image',
+			uniforms: {
+				image: 'marble.jpg'
+			}
+		}
+	});
+	
+	scene.primitives.add(tmpPrimitive);
 }
+
+
+
+
 
 function addOutlineInstancesToPrimitives() {
 	scene.primitives.add(new Cesium.Primitive({
@@ -421,4 +457,91 @@ function saveFile(fileName, str) {
 	document.body.appendChild(downloadLink);
 
 	downloadLink.click();
+}
+
+function importGLBFile(_position, _uri) {
+	viewer.entities.add({
+		position: _position,
+		model: {
+			uri: _uri
+		}
+	});
+}
+
+function extendCeilingsFor2D(height, csmObject) {
+	var ar = csm.abstractFeature.value.geometry2D.abstractSurface.value.exterior.abstractRing;
+
+	// Creating an instance of abstractRing
+	var newSurfaceMenber = new surfaceMember([]);
+
+	var coord = car.value.posOrPointPropertyOrPointRep[i].value.value
+
+	// Number of coordinates of the surface member
+	var coordLen = coord.length;
+
+	// make roof
+	for (var i = 0; i < coordLen; i++) {
+		if (i + 1 % 3 == 0) {
+			coord[i] += height;
+		}
+		newSurfaceMenber.coordinates.push(coord[i]);
+	}
+
+	console.log(newSurfaceMenber);
+
+	return newSurfaceMenber;
+}
+
+function extendWallsFor2D(height, csm) {
+
+	// abstractRing
+	var ar = csm.abstractFeature.value.geometry2D.abstractSurface.value.exterior.abstractRing;
+
+
+	// Creating an instance of abstractRing
+	var arObject = new surfaceMember([]);
+
+	// Number of coordinates of the surface member
+	var coordLen = ar.value.posOrPointPropertyOrPointRep.length;
+
+	// make roof
+	for (var i = 0; i < coordLen; i++) {
+		var leftDown;
+		var rightDown;
+		var rightUp;
+		var leftUp;
+
+		var newWall = new Array;
+		console.log(ar.value.posOrPointPropertyOrPointRep[i].value.value);
+
+		if (i != coordLen - 1) {
+			rightDown = ar.value.posOrPointPropertyOrPointRep[i].value.value;
+			leftDown = ar.value.posOrPointPropertyOrPointRep[i].value.value;
+			rightUp = rightDown;
+			rightUp[2] += height;
+			leftUp = leftDown;
+			leftUp[2] += height;
+		} else {
+			leftDown = ar.value.posOrPointPropertyOrPointRep[i].value.value;
+			rightDown = ar.value.posOrPointPropertyOrPointRep[0].value.value;
+			rightUp = rightDown;
+			rightUp[2] += height;
+			leftUp = leftDown;
+			leftUp[2] += height;
+		}
+
+		newWall.push(leftDown[0], leftDown[1], leftDown[2]);
+		newWall.push(rightDown[0], rightDown[1], rightDown[2]);
+		newWall.push(rightUp[0], rightUp[1], rightUp[2]);
+		newWall.push(leftUp[0], leftUp[1], leftUp[2]);
+		newWall.push(leftDown[0], leftDown[1], leftDown[2]);
+
+		console.log(newWall);
+
+		arObject = abstractCoordination(newWall, arObject);
+	}
+
+	console.log(arObject);
+
+	return arObject;
 }
