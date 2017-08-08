@@ -75,57 +75,57 @@
             })
 		});
 		
-//		var joystick = new VirtualJoystick({
-//				mouseSupport: true,
-//				stationaryBase: false,
-//				baseX: window.innerWidth - 100,
-//				baseY: window.innerHeight - 100,
-//				limitStickTravel: true,
-//				stickRadius: 40,
-//				strokeStyle : 'cyan'
-//			});
-//		
-//		
-//		window.onresize = function(){
-//			joystick.destroy();
-//			joystick = new VirtualJoystick({
-//					mouseSupport: true,
-//					stationaryBase: false,
-//					baseX: window.innerWidth - 100,
-//					baseY: window.innerHeight - 100,
-//					limitStickTravel: true,
-//					stickRadius: 40,
-//					strokeStyle : 'cyan'
-//			});
-//		}
+		var joystick = new VirtualJoystick({
+				mouseSupport: true,
+				stationaryBase: true,
+				baseX: window.innerWidth - 100,
+				baseY: window.innerHeight - 100,
+				limitStickTravel: true,
+				stickRadius: 40,
+				strokeStyle : 'cyan'
+			});
 		
-//		function controlJoystick(){
-//			
-//			requestAnimationFrame(controlJoystick);
-//		
-//			if( joystick.right() ){
-//				console.log("joystick.right()");
-//				onClickRightTurnBtn();
-//			 }
-//
-//			if( joystick.left() ){
-//				console.log("joystick.left()");
-//				onClickLeftTurnBtn();
-//			}
-//
-//			if( joystick.up() ){
-//				console.log("joystick.up()");
-//				onClickMoveFrontBtn();
-//			}
-//
-//			if( joystick.down() ){
-//				console.log("joystick.down()");
-//				onClickMoveBackwardBtn();
-//			}
-//			
-//		}
 		
-//		controlJoystick();
+		window.onresize = function(){
+			joystick.destroy();
+			joystick = new VirtualJoystick({
+					mouseSupport: true,
+					stationaryBase: true,
+					baseX: window.innerWidth - 100,
+					baseY: window.innerHeight - 100,
+					limitStickTravel: false,
+					stickRadius: 40,
+					strokeStyle : 'white'
+			});
+		}
+		
+		function controlJoystick(){
+			
+			requestAnimationFrame(controlJoystick);
+		
+			if( joystick.right() ){
+				console.log("joystick.right()");
+				onClickRightTurnBtn();
+			 }
+
+			if( joystick.left() ){
+				console.log("joystick.left()");
+				onClickLeftTurnBtn();
+			}
+
+			if( joystick.up() ){
+				console.log("joystick.up()");
+				onClickMoveFrontBtn();
+			}
+
+			if( joystick.down() ){
+				console.log("joystick.down()");
+				onClickMoveBackwardBtn();
+			}
+			
+		}
+		
+		controlJoystick();
 	</script>
 
 	
