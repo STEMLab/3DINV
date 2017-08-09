@@ -34,24 +34,24 @@ loadJSON(function (response) {
 
 	// Loop through cellSpaceMembers and creating instances
 	setCellSapceMembers(jsonresponse);
+	setCellSapceBoundaryMembers(jsonresponse);
+	
 	setCenterOfBuilding();
 	
   
-	setPosition(new Cesium.Cartesian3.fromDegrees(129.082678, 35.234794, 0));
+	setPosition(new Cesium.Cartesian3.fromDegrees(127.1034,37.51283,0));
+	setAngle(0.43);
 
-	setAngle(-1.5708);// Rotation angle
 	rotateCellSpaceMember(position);
+	rotateCellSpaceBoundaryMembers(position);
 
-	setGeometryInstance_SAVE();
+	setGeometryInstance();
 	
-//	saveTextFileForSketchUp(700);
 
-//	 Adding instances to primitives
+	// Adding instances to primitives
 	addInstancesToPrimitives();
 	addOutlineInstancesToPrimitives();
-	
-//	importGLBFile(position, 'pnu_313_4.glb');
-	
+		
 	// Working on the graph elements
 	setNodesFromStateMember(jsonresponse);
 	setEdgesFromTransitionMember(jsonresponse);

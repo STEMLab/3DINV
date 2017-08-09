@@ -68,6 +68,24 @@ function getGeometry3DSurfaceMenber(csm, csmObject) {
 	return csmObject;
 }
 
+function getGeometry3DSurfaceMenberFromCSBM(csbm, csbmObject) {
+	// get surface MemberLen
+	var smObject = new surfaceMember([]);
+
+	if (csbm.abstractFeature.value.geometry3D.abstractSurface.value.exterior != null) {
+
+		coordLen = csbm.abstractFeature.value.geometry3D.abstractSurface.value.exterior.abstractRing.value.posOrPointPropertyOrPointRep.length;
+
+		for (var k = 0; k < coordLen; k++) {
+			smObject = abstractCoordination(csbm.abstractFeature.value.geometry3D.abstractSurface.value.exterior.abstractRing.value.posOrPointPropertyOrPointRep[k].value.value, smObject);
+		}
+
+
+	}
+	csbmObject.surfaceMember.push(smObject);
+	return csbmObject;
+}
+
 // Return surface member values from cellspaceMember data when geometry is 2D.
 function getGeometry2DSurfaceMenber(csm, csmObject) {
 	// get surface MemberLen
@@ -116,6 +134,10 @@ function setCellSapceMembers(jsonresponse) {
 			description = csm.abstractFeature.value.description.value;
 		}
 
+		var id = "";
+		if (csm.abstractFeature.value.id != null) {
+			id = csm.abstractFeature.value.id;
+		}
 
 		// Extracting the href of the cell space member
 		var href = "";
@@ -124,10 +146,7 @@ function setCellSapceMembers(jsonresponse) {
 		}
 
 		// Creating an instance of the cell space member
-		var csmObject = new cellSpaceMember(description, href, []);
-
-
-		var surfaceMemberLen;
+		var csmObject = new cellSpaceMember(description, href, id, []);
 
 		// Number of surface members
 		if (csm.abstractFeature.value.geometry3D != null) {
@@ -138,8 +157,68 @@ function setCellSapceMembers(jsonresponse) {
 
 		// Filling the array with the cell space member instancesBut the problem with outline has not been solved yet.
 		cellSpaceMembers.push(csmObject);
-
 	}
+}
+
+function setCellSapceBoundaryMembers(jsonresponse) {
+	var cellSpaceBoundaryMemberLen = jsonresponse.value.primalSpaceFeatures.primalSpaceFeatures.cellSpaceBoundaryMember.length;
+
+	for (var i = 0; i < cellSpaceBoundaryMemberLen; i++) {
+
+		var csbm = jsonresponse.value.primalSpaceFeatures.primalSpaceFeatures.cellSpaceBoundaryMember[i];
+
+		var description = "";
+		if (csbm.abstractFeature.value.description != null) {
+			description = csbm.abstractFeature.value.description.value;
+		}
+
+		var id = "";
+		if (csbm.abstractFeature.value.id != null) {
+			id = csbm.abstractFeature.value.id;
+		}
+
+		// Extracting the href of the cell space member
+		var href = "";
+		if (csbm.abstractFeature.value.duality != null) {
+			href = csbm.abstractFeature.value.duality.href;
+		}
+
+		// Creating an instance of the cell space member
+		var csbmObject = new cellSpaceMember(description, href, id, []);
+
+		// Number of surface members
+		if (csbm.abstractFeature.value.geometry3D != null) {
+			csbmObject = getGeometry3DSurfaceMenberFromCSBM(csbm, csbmObject);
+		} else if (csbm.abstractFeature.value.geometry2D != null) {
+			csbmObject = getGeometry2DSurfaceMenber(csbm, csbmObject);
+		}
+
+		cellSpaceBoundaryMembers.push(csbmObject);
+	}
+
+}
+
+function setUsageData(jsonrespones) {
+	var cellSpaceBoundaryMemberLen = jsonresponse.value.primalSpaceFeatures.primalSpaceFeatures.cellSpaceBoundaryMember.length;
+
+	for (var i = 0; i < cellSpaceBoundaryMemberLen; i++) {
+		var csbm = jsonresponse.value.primalSpaceFeatures.primalSpaceFeatures.cellSpaceBoundaryMember[i];
+
+		var id = csbm.abstractFeature.value.id;
+
+		var description = csbm.abstractFeature.value.description.value;
+		var usage = "";
+
+		if (description.indexOf("Usage") != -1) {
+			var start = description.indexOf("Usage") + 5;
+			var end = description.indexOf(":", start + 1);
+			usage = description.substring(start + 1, end);
+		}
+
+		usageData.put(id, usage);
+	}
+
+	console.log(usageData);
 }
 
 function rotateCellSpaceMember(position) {
@@ -174,9 +253,43 @@ function rotateCellSpaceMember(position) {
 			}
 		}
 	}
-
-	return cellSpaceMembers;
 }
+
+function rotateCellSpaceBoundaryMembers(position) {
+
+	Cesium.Transforms.eastNorthUpToFixedFrame(position, ellipsoid, ENU);
+
+	// Applying translation and rotation to coordinates
+	for (var i = 0; i < cellSpaceBoundaryMembers.length; i++) {
+
+		var csmLen = cellSpaceBoundaryMembers[i].surfaceMember.length;
+
+		for (var j = 0; j < csmLen; j++) {
+			var smLen = cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates.length;
+
+			for (var k = 0; k < smLen; k += 3) {
+
+				// Translating coordinates + converting the result to Cartesian3
+				var offset = new Cesium.Cartesian3(cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates[k] - center_X,
+					cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates[k + 1] - center_Y,
+					cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates[k + 2] - min_Z);
+
+				// Applying rotation to the offset
+				var finalPos = Cesium.Matrix4.multiplyByPoint(orientation, offset, new Cesium.Cartesian3());
+
+				// Report offset to the actual position of LWM
+				var new_coord = Cesium.Matrix4.multiplyByPoint(ENU, finalPos, finalPos);
+
+				// Replacing the old coordinates by the new ones
+				cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates[k] = new_coord.x;
+				cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates[k + 1] = new_coord.y;
+				cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates[k + 2] = new_coord.z;
+			}
+		}
+	}
+}
+
+
 
 function setAngle(_angle) {
 	angle = _angle;
@@ -198,15 +311,15 @@ function setCenterOfBuilding() {
 }
 
 
-function setGeometryInstance_SAVE() {
+function setGeometryInstance() {
 	// Loop through cell space members and creating geometry instances
 	for (var i = 0; i < cellSpaceMembers.length; i++) {
 		for (var j = 0; j < cellSpaceMembers[i].surfaceMember.length; j++) {
-			instances.push(new Cesium.GeometryInstance({
+			roomInstances.push(new Cesium.GeometryInstance({
 				geometry: new Cesium.PolygonGeometry({
 					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceMembers[i].surfaceMember[j].coordinates)),
 					perPositionHeight: true
-				})
+				}),
 			}));
 
 			outlineInstances.push(new Cesium.GeometryInstance({
@@ -217,6 +330,17 @@ function setGeometryInstance_SAVE() {
 				attributes: {
 					color: Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.BLACK)
 				}
+			}));
+		}
+	}
+
+	for (var i = 0; i < cellSpaceBoundaryMembers.length; i++) {
+		for (var j = 0; j < cellSpaceBoundaryMembers[i].surfaceMember.length; j++) {
+			doorInstances.push(new Cesium.GeometryInstance({
+				geometry: new Cesium.PolygonGeometry({
+					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.unpackArray(cellSpaceBoundaryMembers[i].surfaceMember[j].coordinates)),
+					perPositionHeight: true
+				}),
 			}));
 		}
 	}
@@ -246,17 +370,9 @@ function saveTextFileForSketchUp(faceCount) {
 }
 
 function addInstancesToPrimitives() {
-	var material = new Cesium.Material({
-		fabric: {
-			type: 'Image',
-			uniforms: {
-				image: 'images.jpg'
-			}
-		}
-	});
-	
-	var tmpPrimitive = new Cesium.Primitive({
-		geometryInstances: instances,
+
+	var doorPrimitive = new Cesium.Primitive({
+		geometryInstances: doorInstances,
 		appearance: new Cesium.PerInstanceColorAppearance({
 			faceForward: true,
 			flat: true,
@@ -264,11 +380,32 @@ function addInstancesToPrimitives() {
 			closed: false
 		})
 	});
-	
-	
-	
-	tmpPrimitive.appearance = new Cesium.MaterialAppearance();
-	tmpPrimitive.appearance.material = new Cesium.Material({
+
+	doorPrimitive.appearance = new Cesium.MaterialAppearance();
+	doorPrimitive.appearance.material = new Cesium.Material({
+		fabric: {
+			type: 'Image',
+			uniforms: {
+				image: 'metal.jpg'
+			}
+		}
+	});
+
+	scene.primitives.add(doorPrimitive);
+
+
+	var roomPrimitive = new Cesium.Primitive({
+		geometryInstances: roomInstances,
+		appearance: new Cesium.PerInstanceColorAppearance({
+			faceForward: true,
+			flat: true,
+			translucent: false,
+			closed: false
+		})
+	});
+
+	roomPrimitive.appearance = new Cesium.MaterialAppearance();
+	roomPrimitive.appearance.material = new Cesium.Material({
 		fabric: {
 			type: 'Image',
 			uniforms: {
@@ -276,10 +413,10 @@ function addInstancesToPrimitives() {
 			}
 		}
 	});
-	
-	scene.primitives.add(tmpPrimitive);
-}
 
+		scene.primitives.add(roomPrimitive);
+
+}
 
 
 

@@ -1,7 +1,36 @@
+// define map
+function Map() {
+    this.elements = {};
+    this.length = 0;
+    this.index = [];
+}
+
+Map.prototype.put = function(key,value) {
+    this.length++;
+    this.elements[key] = value;
+	
+	if(this.index.indexOf(key) == -1) this.index.push(key);
+}
+
+Map.prototype.get = function(key) {
+    return this.elements[key];
+}
+
+Map.prototype.getKeyByIndex = function(index){
+    return this.index[index];
+}
+
+Map.prototype.getValueByIndex = function(index){
+	return this.elements[this.getKeyByIndex(index)];
+}
+
+
+
 // Creating the cellSpaceMember Class
-function cellSpaceMember(description, href, surfaceMember) {
+function cellSpaceMember(description, href, id, surfaceMember) {
 	this.description = description; // Description contains information about section and floor ... etc
 	this.href = href; // Duality
+	this.id = id;
 	this.surfaceMember = surfaceMember; // Array of surface members
 }
 
@@ -22,6 +51,8 @@ function transitionMember(connects, description, coordinates) {
 	this.stateMembers = coordinates; // Array of state members, each state member has X,Y,Z coordinates
 }
 
+
+
 // Variables where the maximum coordinates will be stored
 var max_X = 0;
 var max_Y = 0;
@@ -38,10 +69,13 @@ var center_Y;
 
 // Array of cellSpaceMember instances
 var cellSpaceMembers = [];
+var cellSpaceBoundaryMembers = [];
 
 // Number of cell space members
 var cellSpaceMemberLen;
 
+
+var usageData = new Map(); // key : id, value : usage
 
 var ellipsoid = viewer.scene.globe.ellipsoid;
 var ENU = new Cesium.Matrix4(); // The object onto which to store the transformation result
@@ -54,7 +88,8 @@ var position; // Center of Building
 var scene = viewer.scene;
 
 // Array of instances
-var instances = [];
+var roomInstances = [];
+var doorInstances = [];
 var outlineInstances = [];
 
 // roomColors if you 
