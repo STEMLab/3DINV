@@ -4,8 +4,8 @@
 ## How you use
  1. Please download the node_modules folder.
  2. Input file path in 24 line and 26 line.
-	2.1. "YOUR GML FILE PATH" is file path what you want to convert.
-	2.2. "YOUR JSON FILE PATH" is file path what you want to get.
+  1) "YOUR GML FILE PATH" is file path what you want to convert.
+  2) "YOUR JSON FILE PATH" is file path what you want to get.
  3. Move your path of node js into the gmltoJSON folder.
  4. Open the node js bash, and input "node server.js"
  5. Open the web, and Move to "localhost:8080"
