@@ -21,9 +21,9 @@ http.createServer(function(request, response){
 	});
    
 	var unmarshaller = context.createUnmarshaller();
-	var resume = unmarshaller.unmarshalFile("./addstair.gml", function(result) {
+	var resume = unmarshaller.unmarshalFile("YOUR GML FILE PATH", function(result) {
 		var fs = require('fs');
-		var writer = fs.createWriteStream('addstair.json');
+		var writer = fs.createWriteStream('YOUR JSON FILE PATH');
 		writer.write(JSON.stringify(result, null, 1));
 	});
 

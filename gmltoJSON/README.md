@@ -2,11 +2,14 @@
   **This project is for browsing indoor spaces with 3D visualization tools (Cesium)**
   
 ## How you use
- 0. Please download the node_modules folder.
- 1. Move your path of node js into the gmltoJSON folder.
- 2. Open the node js bash, and input "node server.js"
- 3. Open the web, and Move to "localhost:8080"
- 4. you can get JSON file
+ 1. Please download the node_modules folder.
+ 2. Input file path in 24 line and 26 line.
+	2.1. "YOUR GML FILE PATH" is file path what you want to convert.
+	2.2. "YOUR JSON FILE PATH" is file path what you want to get.
+ 3. Move your path of node js into the gmltoJSON folder.
+ 4. Open the node js bash, and input "node server.js"
+ 5. Open the web, and Move to "localhost:8080"
+ 6. you can get JSON file
  
 ## How to modify file name
  1. In the gmltoJSON folder, open the server.js file.
