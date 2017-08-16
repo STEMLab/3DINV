@@ -1,0 +1,46 @@
+{
+	"name" : "jsonix",
+	"version" : "${project.version}",
+	"description" : "Jsonix (JSON interfaces for XML) is a JavaScript library which allows converting between XML and JSON structures.",
+	"keywords" : [ "json", "xml", "unmarshal", "unmarshalling", "marshal",
+			"marshalling", "parse", "parsing", "serialize", "serializing",
+			"javascript objects", "dom", "util", "utility", "jaxb", "jsonix" ],
+	"homepage" : "http://github.com/highsource/jsonix",
+	"bugs" : {
+		"url" : "http://github.com/highsource/jsonix/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/highsource/jsonix.git"
+	},
+	"licenses" : [ {
+		"type" : "BSD-3-Clause",
+		"url" : "http://github.com/highsource/jsonix/raw/master/LICENSE"
+	} ],
+	"author" : {
+		"name" : "Alexey Valikov",
+		"url" : "http://github.com/highsource"
+	},
+	"contributors" : [ {
+		"name" : "Conrad Pankoff",
+		"url" : "https://github.com/deoxxa"
+	} ],
+	"main" : "jsonix.js",
+	"repository" : {
+		"type" : "git",
+		"url" : "http://github.com/highsource/jsonix.git"
+	},
+	"scripts" : {
+		"test" : "nodeunit tests/tests.js"
+	},
+	"dependencies" : {
+		"amdefine" : "0.x.x",
+		"xmldom" : ">=0.1.21",
+		"xmlhttprequest" : "1.x.x"
+	},
+	"devDependencies" : {
+		"nodeunit" : "0.x.x",
+		"node-static" : "0.x.x"
+	},
+	"engines" : [ "node >= 0.8.0" ]
+}

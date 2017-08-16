@@ -1,0 +1,8 @@
+{
+	"anyElementLax" : {
+		"any" : {
+			"string" : "test"
+		},
+		"TYPE_NAME" : "Zero.AnyElementLaxType"
+	}
+}

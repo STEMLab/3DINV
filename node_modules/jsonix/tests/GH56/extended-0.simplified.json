@@ -1,0 +1,8 @@
+{
+	"extended" : {
+		"alpha" : "one",
+		"beta" : [ 2 ],
+		"gamma" : "urn:three",
+		"TYPE_NAME" : "Zero.ExtendedType"
+	}
+}
