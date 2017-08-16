@@ -1,0 +1,32 @@
+{
+  "tags": {
+    "allowUnknownTags": false
+  },
+  "source": {
+    "include": ["./js"], // File name or directory name to read the annotation
+    "includePattern": ".js$", // Patterns of files to read
+    "exclude": ["./main.js", "./require.js"], // File name or directory name to exclude
+    "excludePattern": "(node_modules/|docs)" // Patterns of files to exclude
+  },
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "opts": {
+    "template": "../node_modules/docdash", // Downloaded template path
+    "encoding": "utf8",
+    "destination": "./out", // Path to Create Documents
+    "recurse": true,
+    "verbose": true
+  },
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false,
+    "default": {
+      "outputSourceFiles": false
+    }
+  },
+  "docdash": { // Options Supported by the docdash template
+    "static": true,
+    "sort": true
+  }
+}
