@@ -31,9 +31,10 @@ require([
   var displayHelper = new DisplayHelper(gmlDataContainer, viewer);
 
   displayHelper.displayBuilding(viewer,
-    new PrimitiveOption("Image", false, "./Texture/blue.jpg", null),
-    new PrimitiveOption("Image", false, "./Texture/marble.jpg", null),
-    new PrimitiveOption("Image", false, "./Texture/marble.jpg", null));
+    new PrimitiveOption("Image", false, "./Texture/dark_blue.png", null),
+    new PrimitiveOption("Image", false, "./Texture/light_gray.png", null),
+    new PrimitiveOption("Image", false, "./Texture/dark_gray.png", null),
+    new PrimitiveOption("Image", false, "./Texture/light_gray.png", null));
 
   displayHelper.displayPath(viewer);
 

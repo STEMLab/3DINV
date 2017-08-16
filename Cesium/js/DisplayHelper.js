@@ -21,6 +21,7 @@ define([
     this.roomInstances = [];
     this.doorInstances = [];
     this.otherInstances = [];
+    this.ceilingInstances = [];
     this.outlineInstances = [];
 
     this.setGeometryInstances();
@@ -48,6 +49,17 @@ define([
           }),
         });
 
+
+        var temp = Cesium.Cartesian3.unpackArray(this.gmlDataContainer.cellSpaceMembers[i].surfaceMember[j].coordinates);
+        var pre = Math.floor(Cesium.Cartographic.fromCartesian(temp[0]).height);
+        var escape = false;
+        for (var k = 1; k < temp.length; k++) {
+            var temp2 = Cesium.Cartographic.fromCartesian(temp[k]);
+            if (pre !=  Math.floor(temp2.height)) {
+              escape = true;
+            }
+        }
+
         if (this.gmlDataContainer.cellSpaceMembers[i].usage == "Door") {
           this.doorInstances.push(geometryInstance);
 
@@ -60,10 +72,12 @@ define([
               color: Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.BLACK)
             }
           }));
-        } else if (this.gmlDataContainer.cellSpaceMembers[i].usage == "Room") {
+        } else if (this.gmlDataContainer.cellSpaceMembers[i].usage == "Room" && escape) {
           this.roomInstances.push(geometryInstance);
-        } else {
+        } else if (escape){
           this.otherInstances.push(geometryInstance);
+        } else{
+          this.ceilingInstances.push(geometryInstance);
         }
       }
     }
@@ -75,13 +89,15 @@ define([
    * @description
    * @param {PrimitiveOption} doorOption
    * @param {PrimitiveOption} roomOption
+   * @param {PrimitiveOption} ceilingOption
    * @param {PrimitiveOption} otherOption
    */
-  DisplayHelper.prototype.displayBuilding = function(viewer, doorOption, roomOption, otherOption) {
+  DisplayHelper.prototype.displayBuilding = function(viewer, doorOption, roomOption, ceilingOption, otherOption) {
 
     this.addDoorInstancesToPrimitives(viewer, doorOption);
     this.addRoomInstancesToPrimitives(viewer, roomOption);
     this.addOtherInstancesToPrimitives(viewer, otherOption);
+    this.addCeilingInstancesToPrimitives(viewer, ceilingOption);
     this.addOutlineInstancesToPrimitives(viewer);
 
   }
@@ -130,6 +146,30 @@ define([
     roomPrimitive.appearance = new Cesium.MaterialAppearance();
     roomPrimitive.appearance.material = roomOption.getMaterial();
     viewer.scene.primitives.add(roomPrimitive);
+
+  }
+
+
+
+  /**
+   * @description
+   * @param {PrimitiveOption} ceilingOption
+   */
+  DisplayHelper.prototype.addCeilingInstancesToPrimitives = function(viewer, ceilingOption) {
+
+    var ceilingPrimitive = new Cesium.Primitive({
+      geometryInstances: this.ceilingInstances,
+      appearance: new Cesium.PerInstanceColorAppearance({
+        faceForward: true,
+        flat: true,
+        translucent: ceilingOption.translucent,
+        closed: false
+      })
+    });
+
+    ceilingPrimitive.appearance = new Cesium.MaterialAppearance();
+    ceilingPrimitive.appearance.material = ceilingOption.getMaterial();
+    viewer.scene.primitives.add(ceilingPrimitive);
 
   }
 
@@ -196,16 +236,16 @@ define([
             new Cesium.Cartesian3(
               this.gmlDataContainer.edges[i].stateMembers[0].coordinates[0],
               this.gmlDataContainer.edges[i].stateMembers[0].coordinates[1],
-              this.gmlDataContainer.edges[i].stateMembers[0].coordinates[2]),
+              this.gmlDataContainer.edges[i].stateMembers[0].coordinates[2]+0.2),
             new Cesium.Cartesian3(
               this.gmlDataContainer.edges[i].stateMembers[1].coordinates[0],
               this.gmlDataContainer.edges[i].stateMembers[1].coordinates[1],
-              this.gmlDataContainer.edges[i].stateMembers[1].coordinates[2])
+              this.gmlDataContainer.edges[i].stateMembers[1].coordinates[2]+0.2)
           ],
-          followSurface: new Cesium.ConstantProperty(false),
-          width : 30,
+          followSurface: new Cesium.ConstantProperty(true),
+          width : 50,
           distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8.0),
-          material : Cesium.Color.BLUE.withAlpha(0.5),
+          material : Cesium.Color.WHITE.withAlpha(0.8),
           outline : true, // height or extrudedHeight must be set for outlines to display
           outlineColor : Cesium.Color.WHITE
         }
