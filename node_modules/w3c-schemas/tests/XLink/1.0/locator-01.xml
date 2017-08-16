@@ -1,0 +1,8 @@
+<xlink:locator xmlns:xlink="http://www.w3.org/1999/xlink"
+	xlink:type="locator"
+	xlink:href="https://github.com/highsource/w3c-schemas"
+	xlink:role="urn:none"
+	xlink:title="Locator Title"
+	xlink:label="label">
+	<xlink:title xlink:type="title" xml:lang="en">Title</xlink:title>
+</xlink:locator>
