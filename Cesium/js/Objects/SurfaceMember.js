@@ -2,7 +2,13 @@ define([],
   function() {
     'use strict';
 
-    // Creating the surfaceMember Class
+    /**
+     * Objects storing CellSpaceMember in IndoorGML.
+     * Creating the surfaceMember Class.
+     * @exports SurfaceMember
+     * @constructor
+     * @param {Coordination} coordinates
+     */
     function SurfaceMember(coordinates) {
       this.coordinates = coordinates; //Array of surfaceMember coordinates
     }

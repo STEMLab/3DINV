@@ -4,6 +4,7 @@ define([],function() {
   /**
    * Coordination data format
    * @exports Coordination
+   * @constructor
    * @param {number} x
    * @param {number} y
    * @param {number} z
@@ -17,7 +18,9 @@ define([],function() {
   }
 
   /**
-   * @return {string}
+   * define toString
+   * @memberof Coordination
+   * @return {string} x, y, z
    */
   Coordination.prototype.toString = function(){
     return x + ", " + y + ", " + z;

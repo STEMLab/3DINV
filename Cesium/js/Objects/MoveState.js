@@ -2,11 +2,34 @@ define([],function() {
   'use strict';
 
   /**
-   * @description
+   * Status variables that are used for moving the movement in {@link IndoorNavigation}.
+   * @exports MoveState
+   * @constructor
    */
   function MoveState(){
+    /**
+     * The starting point of the current movement.</br>
+     * href is acting as a key role in {@link CellSpaceMember}, {@link Coordination}, connects in {@link TransitionMember} and you can get coordination from each objects.
+     *
+     */
   	this.srcHref = null;
+
+    /**
+     * The ending point of the current movement.</br>
+     * href is acting as a key role in {@link CellSpaceMember}, {@link Coordination}, connects in {@link TransitionMember} and you can get coordination from each objects.
+     */
   	this.dstHref = null;
+
+    /**
+    * T comes from parameter equations in space.</br>
+    * To find the position where the camera moves, use srcHref and dstHref to get the coordinates of the two points and derive the equation of the line from this.</br>
+    * When the coordinate of src is P0(x0, y0, z0) and the coordinate of dst is P1(x1, y1, z1), the equation of the straight line connecting two points is x-x0/x1-x0 = y-y0/y1-y0 = z-z0/z1-z0 </br>
+    * And the above equation is expressed by a parameter equation for the parameter T, it becomes x = (x1-x0)T + x0, y = (y1-y0)T + y0, z = (z1-z0)T + z0.</br>
+    * If T = 0, the equation returns the coordinates of src. </br>
+    * If T = 1, the equation returns the coordinates of src. </br>
+    * In the same context, if T = 0.5, the equation returns the coordinates of the middle point between src and dst.</br>
+    * In this way, we use the value of MoveState to find the coordinates the camera will move.
+    */
   	this.T = 0;
   }
 

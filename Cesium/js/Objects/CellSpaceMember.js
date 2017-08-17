@@ -1,8 +1,17 @@
+
 define([],
   function() {
     'use strict';
 
-    // Creating the cellSpaceMember Class
+    /**
+     * Objects storing CellSpaceMember in IndoorGML
+     * @exports CellSpaceMember
+     * @constructor
+     * @param {string} description description of CellSpaceMember
+     * @param {string} href href of CellSpaceMember
+     * @param {string} id id of CellSpaceMember
+     * @param {Array} surfaceMember Array of {@link SurfaceMember}
+     */
     function CellSpaceMember(description, href, id, surfaceMember) {
     	this.description = description; // Description contains information about section and floor ... etc
     	this.href = href; // Duality
