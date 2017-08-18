@@ -6,12 +6,10 @@
  */
 define([
   "./Objects/MoveState",
-  "./Objects/myMap",
   "./Objects/RoomInfo",
   "./Objects/Coordination"
 ], function(
   MoveState,
-  myMap,
   RoomInfo,
   Coordination
 ) {
@@ -45,11 +43,14 @@ define([
     this.currentEdge = -1; // test data
 
     this.nowMoveState = new MoveState();
-    this.roomInfo = new myMap(); // key href, value RoomInfo
+    this.roomData = new Map();
+
     this.sectionData = [];
     this.floorData = [];
 
     this.makeRoomData();
+
+
   }
 
 
@@ -76,7 +77,8 @@ define([
   /**
    */
   IndoorNavigation.prototype.setTreeViewNavigation = function() {
-    var json = this.makeRoomInfoToJson();
+    // var json = this.makeRoomInfoToJson();
+    var json = this.makeRoomDataToJson();
     setTreeView(json); // this function must in html
   }
 
@@ -123,9 +125,7 @@ define([
           this.gmlDataContainer.edges[i].stateMembers[j].coordinates[2],
           this.gmlDataContainer.edges[i].connects[j]);
 
-        if (this.roomInfo.get(this.gmlDataContainer.edges[i].connects[j]) == null) {
-          this.roomInfo.put(this.gmlDataContainer.edges[i].connects[j], tmpRoomInfo);
-        }
+        this.roomData.set(this.gmlDataContainer.edges[i].connects[j], tmpRoomInfo);
       }
     }
   }
@@ -135,7 +135,7 @@ define([
   /**
    * @return {Object}
    */
-  IndoorNavigation.prototype.makeRoomInfoToJson = function() {
+  IndoorNavigation.prototype.makeRoomDataToJson = function() {
     var roomArray = new Array();
 
     for (var i = 0; i < this.sectionData.length; i++) {
@@ -156,12 +156,11 @@ define([
       }
     }
 
-    for (var i = 0; i < this.roomInfo.length; i++) {
+    for (var key of this.roomData.keys()){
       var roomInfo = new Object();
-      roomInfo.id = this.roomInfo.getKeyByIndex(i); // href
-      roomInfo.parent = this.roomInfo.get(roomInfo.id).section +
-        this.roomInfo.get(roomInfo.id).floor;
-      roomInfo.text = roomInfo.id;
+      roomInfo.id = key;
+      roomInfo.parent = this.roomData.get(key).section+this.roomData.get(key).floor;
+      roomInfo.text = key;
       roomInfo.icon = "glyphicon glyphicon-leaf";
       roomArray.push(roomInfo);
     }
@@ -198,7 +197,8 @@ define([
    * @param {Array} roomHref
    */
   IndoorNavigation.prototype.onClickTreeView = function(roomHref) {
-    var pickedRoom = this.roomInfo.get(roomHref[0]);
+    var pickedRoom = this.roomData.get(roomHref[0]);
+    // var pickedRoom = this.roomInfo.get(roomHref[0]);
 
     if (pickedRoom == null) {
       // open lower tree
@@ -307,19 +307,22 @@ define([
 
     console.log(this.nowMoveState.dstHref);
     if (this.nowMoveState.dstHref != null) {
-      var direction = this.getDirection(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-        this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+      var direction = this.getDirection(
+        this.roomData.get(this.nowMoveState.srcHref).coordination,
+        this.roomData.get(this.nowMoveState.dstHref).coordination,
         now,
         Cesium.Math.toDegrees(this.camera.heading));
 
       if (direction == 0 && this.nowMoveState.T != 0) { //camera see src direction
-        this.moveToSrc(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-          this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+        this.moveToSrc(
+          this.roomData.get(this.nowMoveState.srcHref).coordination,
+          this.roomData.get(this.nowMoveState.dstHref).coordination,
           this.nowMoveState.T);
         this.nowMoveState.T -= this.moveRate;
       } else if (direction == 1 && this.nowMoveState.T != 1) { //camera see dst direction
-        this.moveToDst(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-          this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+        this.moveToDst(
+          this.roomData.get(this.nowMoveState.srcHref).coordination,
+          this.roomData.get(this.nowMoveState.dstHref).coordination,
           this.nowMoveState.T);
         this.nowMoveState.T += this.moveRate;
       } else if (direction == -1) {} else {
@@ -339,20 +342,23 @@ define([
     var now = new Coordination(this.camera.position.x, this.camera.position.y, this.camera.position.z);
 
     if (this.nowMoveState.dstHref != null) {
-      var direction = this.getDirection(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-        this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+      var direction = this.getDirection(
+        this.roomData.get(this.nowMoveState.srcHref).coordination,
+        this.roomData.get(this.nowMoveState.dstHref).coordination,
         now,
         Cesium.Math.toDegrees(this.camera.heading));
       console.log(direction)
 
       if (direction == 0 && this.nowMoveState.T != 1) {
-        this.moveToDst(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-          this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+        this.moveToDst(
+          this.roomData.get(this.nowMoveState.srcHref).coordination,
+          this.roomData.get(this.nowMoveState.dstHref).coordination,
           this.nowMoveState.T);
         this.nowMoveState.T += moveRate;
       } else if (direction == 1 && this.nowMoveState.T != 0) {
-        this.moveToSrc(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-          this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+        this.moveToSrc(
+          this.roomData.get(this.nowMoveState.srcHref).coordination,
+          this.roomData.get(this.nowMoveState.dstHref).coordination,
           this.nowMoveState.T);
         nowMoveState.T -= moveRate;
       } else if (direction == -1) {
@@ -616,40 +622,47 @@ define([
    */
   IndoorNavigation.prototype.onClickEdge = function(feature) {
     if (Cesium.defined(feature['id']['polyline'])) {
+
       var lineName = feature['id']['name'];
+
       var polylineSrc = new Coordination(feature['id']['polyline']['positions'].getValue(0)[0].x,
         feature['id']['polyline']['positions'].getValue(0)[0].y,
         feature['id']['polyline']['positions'].getValue(0)[0].z,
         lineName.substring(lineName.indexOf("#"), lineName.indexOf(",")));
+
       var polylineDst = new Coordination(feature['id']['polyline']['positions'].getValue(0)[1].x,
         feature['id']['polyline']['positions'].getValue(0)[1].y,
         feature['id']['polyline']['positions'].getValue(0)[1].z,
         lineName.substring(lineName.indexOf(",") + 1));
-      var now = this.roomInfo.get(this.nowMoveState.srcHref).coordination;
+
+      var now = this.roomData.get(this.nowMoveState.srcHref).coordination;
 
       if (now.href != polylineSrc.href && now.href != polylineDst.href) {
         this.setMoveStateForOnClickEdge(polylineSrc, polylineDst);
       } else if(now.href == polylineSrc.href){
         this.nowMoveState.dstHref = polylineDst.href;
       } else if(now.href == polylineDst.href){
-        this.nowMoveState.srcHred = polylineSrc.href;
+        this.nowMoveState.srcHref = polylineSrc.href;
       }
 
-      var direction = this.getDirection(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-        this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+      var direction = this.getDirection(
+        this.roomData.get(this.nowMoveState.srcHref).coordination,
+        this.roomData.get(this.nowMoveState.dstHref).coordination,
         new Coordination(this.camera.position.x, this.camera.position.y, this.camera.position.z),
         Cesium.Math.toDegrees(this.camera.heading));
 
       console.log(direction, this.nowMoveState);
 
       if (direction == 0 && this.nowMoveState.T != 0) { //camera see src direction
-        this.moveToSrc(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-          this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+        this.moveToSrc(
+          this.roomData.get(this.nowMoveState.srcHref).coordination,
+          this.roomData.get(this.nowMoveState.dstHref).coordination,
           this.nowMoveState.T);
         this.nowMoveState.T -= this.moveRate;
       } else if (direction == 1 && this.nowMoveState.T != 1) { //camera see dst direction
-        this.moveToDst(this.roomInfo.get(this.nowMoveState.srcHref).coordination,
-          this.roomInfo.get(this.nowMoveState.dstHref).coordination,
+        this.moveToDst(
+          this.roomData.get(this.nowMoveState.srcHref).coordination,
+          this.roomData.get(this.nowMoveState.dstHref).coordination,
           this.nowMoveState.T);
         this.nowMoveState.T += this.moveRate;
       } else if (direction == -1) {} else {
