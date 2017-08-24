@@ -7,10 +7,13 @@ define([],
      * Creating the surfaceMember Class.
      * @exports SurfaceMember
      * @constructor
-     * @param {Coordination} coordinates
+     * @param {Coordinate} coordinates
      */
     function SurfaceMember(coordinates) {
-      this.coordinates = coordinates; //Array of surfaceMember coordinates
+
+      /** Array of surfaceMember coordinates */
+      this.coordinates = coordinates;
+
     }
 
     return SurfaceMember;

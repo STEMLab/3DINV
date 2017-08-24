@@ -2,9 +2,16 @@ define([],
   function() {
     'use strict';
 
-    // State Member Class
+    /**
+     * State Member Class. This can be thought of as simply a node.
+     * @exports StateMember
+     * @constructor
+     */
     function StateMember(coordinates) {
-      this.coordinates = coordinates; // Array of coordinates
+
+      /** Array of coordinates*/
+      this.coordinates = coordinates;
+      
     }
 
     return StateMember;

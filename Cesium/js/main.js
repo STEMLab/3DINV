@@ -10,7 +10,7 @@ require([
   "./GMLDataContainer",
   "./DisplayHelper",
   "./Objects/PrimitiveOption",
-  "json!../json/sample_data_lwm_3d.json",
+  "json! YOUR JSON FILE PATH",
   "./IndoorNavigation"
 ], function(
   GMLDataContainer,
@@ -21,12 +21,11 @@ require([
 ) {
   'use strict';
 
-  console.log(sample_data_lwm_3d);
+  console.log(YOUR JSON FILE NAME);
 
-  var gmlDataContainer = new GMLDataContainer(sample_data_lwm_3d);
+  var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME);
 
-  gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(127.1034, 37.51283, 0), 0.43); // LWM
-  // gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(129.082678, 35.234898, 0), -1.5708); // PNU
+  gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(120.0, 20.0, 0), 0.43); // YOUR BULIDING LOCATION
 
   var displayHelper = new DisplayHelper(gmlDataContainer, viewer);
 
@@ -57,31 +56,31 @@ require([
   });
 
   $('#turnLeftBtn').click(function(){
-    indoorNavigation.onClickLeftTurnBtn();
+    indoorNavigation.actionTurnLeft();
   });
 
   $('#turnRightBtn').click(function(){
-    indoorNavigation.onClickRightTurnBtn();
+    indoorNavigation.actionTurnRight();
   });
 
   $('#moveFront').click(function(){
-    indoorNavigation.onClickMoveFrontBtn();
+    indoorNavigation.actionMoveFront();
   });
 
   $('#moveBackward').click(function(){
-    indoorNavigation.onClickMoveBackwardBtn();
+    indoorNavigation.actionMoveBack();
   });
 
   $('#backToOrigianlViewBtn').click(function(){
-    indoorNavigation.onClickBackToOrigianlViewBtn();
+    indoorNavigation.actionTurnStraight();
   });
 
   $('#zoomIn').click(function(){
-    indoorNavigation.onClickZoomInBtn();
+    indoorNavigation.actionZoomIn();
   });
 
   $('#zoomOut').click(function(){
-    indoorNavigation.onClickZoomOutBtn();
+    indoorNavigation.actionZoomOut();
   });
 
 

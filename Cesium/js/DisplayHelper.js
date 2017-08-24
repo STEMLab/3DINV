@@ -1,3 +1,9 @@
+/**
+ * DisplayHelper draw simple building using geometry data of cellSpaceMember from IndoorGML file.</br>
+ * The building that drawing by this module will be consist of simple polygon
+ * and you can add some color or texture(image) on it.
+ * @module DisplayHelper
+ */
 define([
   "./GMLDataContainer",
   "./Objects/PrimitiveOption"
@@ -9,19 +15,43 @@ define([
 
 
   /**
-   * @description The class for the UI implementation of the Viewer in Cesium.
+   * Create new DisplayHelper.
+   * @alias module:DisplayHelper
    * @param {GMLDataContainer} GMLDataContainer
    */
   function DisplayHelper(GMLDataContainer) {
 
+    /**
+     * This value will from {@link GMLDataContainer} and this value contain geometry data for target building.
+     */
     this.gmlDataContainer = GMLDataContainer;
 
 
-    // Array of instances
+    /**
+     * Array of instances what expresses room except its ceiling.
+     */
     this.roomInstances = [];
+
+    /**
+     * Array of instances what expresses door.
+     */
     this.doorInstances = [];
+
+    /**
+     * Array of instances what didn't expresses certain thing.</br>
+     * When one cellSpace have no usage data, it's geometry will visualize through this.</br>
+     * This can be hallway, lobby, etc.
+     */
     this.otherInstances = [];
+
+    /**
+     * Array of instances what expresses ceiling of space.
+     */
     this.ceilingInstances = [];
+
+    /**
+     * Array of instances what expresses outline of door.
+     */
     this.outlineInstances = [];
 
     this.setGeometryInstances();
@@ -30,7 +60,8 @@ define([
 
 
   /**
-   * @description
+   * Set value of {@link module:roomInstances}, {@link module:doorInstances}, {@link module:doorInstances}, {@link module:ceilingInstances},
+   * {@link module:otherInstances}, {@link module:outlineInstances} from {@link module:gmlDataContainer}
    */
   DisplayHelper.prototype.setGeometryInstances = function() {
 
@@ -49,15 +80,15 @@ define([
           }),
         });
 
-
+        /** checking for ceiling */
         var temp = Cesium.Cartesian3.unpackArray(this.gmlDataContainer.cellSpaceMembers[i].surfaceMember[j].coordinates);
         var pre = Math.floor(Cesium.Cartographic.fromCartesian(temp[0]).height);
         var escape = false;
         for (var k = 1; k < temp.length; k++) {
-            var temp2 = Cesium.Cartographic.fromCartesian(temp[k]);
-            if (pre !=  Math.floor(temp2.height)) {
-              escape = true;
-            }
+          var temp2 = Cesium.Cartographic.fromCartesian(temp[k]);
+          if (pre != Math.floor(temp2.height)) {
+            escape = true;
+          }
         }
 
         if (this.gmlDataContainer.cellSpaceMembers[i].usage == "Door") {
@@ -74,9 +105,9 @@ define([
           }));
         } else if (this.gmlDataContainer.cellSpaceMembers[i].usage == "Room" && escape) {
           this.roomInstances.push(geometryInstance);
-        } else if (escape){
+        } else if (escape) {
           this.otherInstances.push(geometryInstance);
-        } else{
+        } else {
           this.ceilingInstances.push(geometryInstance);
         }
       }
@@ -86,11 +117,20 @@ define([
 
 
   /**
-   * @description
+   * Display building on Cesuim viewer. You can add color or texture for each instances using parameter.
+   * @param {Cesium.Viewer} viewer
    * @param {PrimitiveOption} doorOption
    * @param {PrimitiveOption} roomOption
    * @param {PrimitiveOption} ceilingOption
    * @param {PrimitiveOption} otherOption
+   * @example
+   * var displayHelper = new DisplayHelper(gmlDataContainer, viewer);
+   * displayHelper.displayBuilding(
+   *  viewer,
+   *  new PrimitiveOption("Image", false, "./Texture/dark_blue.png", null),
+   *  new PrimitiveOption("Image", false, "./Texture/light_gray.png", null),
+   *  new PrimitiveOption("Image", false, "./Texture/dark_gray.png", null),
+   *  new PrimitiveOption("Image", false, "./Texture/light_gray.png", null));
    */
   DisplayHelper.prototype.displayBuilding = function(viewer, doorOption, roomOption, ceilingOption, otherOption) {
 
@@ -105,7 +145,7 @@ define([
 
 
   /**
-   * @description
+   * Display door on Cesuim viewer by adding {@link module:DisplayHelper.doorInstances} to {@link https://cesiumjs.org/Cesium/Build/Documentation/Scene.html|Scene.primitives}.
    * @param {PrimitiveOption} doorOption
    */
   DisplayHelper.prototype.addDoorInstancesToPrimitives = function(viewer, doorOption) {
@@ -128,7 +168,7 @@ define([
 
 
   /**
-   * @description
+   * Display room on Cesuim viewer by adding {@link module:DisplayHelper.roomInstances} to {@link https://cesiumjs.org/Cesium/Build/Documentation/Scene.html|Scene.primitives}.
    * @param {PrimitiveOption} roomOption
    */
   DisplayHelper.prototype.addRoomInstancesToPrimitives = function(viewer, roomOption) {
@@ -152,7 +192,7 @@ define([
 
 
   /**
-   * @description
+   * Display ceiling on Cesuim viewer by adding {@link module:DisplayHelper.ceilingInstances} to {@link https://cesiumjs.org/Cesium/Build/Documentation/Scene.html|Scene.primitives}.
    * @param {PrimitiveOption} ceilingOption
    */
   DisplayHelper.prototype.addCeilingInstancesToPrimitives = function(viewer, ceilingOption) {
@@ -176,7 +216,7 @@ define([
 
 
   /**
-   * @description
+   * Display space on Cesuim viewer by adding {@link module:DisplayHelper.otherInstances} to {@link https://cesiumjs.org/Cesium/Build/Documentation/Scene.html|Scene.primitives}.
    * @param {PrimitiveOption} otherOption
    */
   DisplayHelper.prototype.addOtherInstancesToPrimitives = function(viewer, otherOption) {
@@ -200,7 +240,7 @@ define([
 
 
   /**
-   * @description
+   * Display outline of doors on Cesuim viewer by adding {@link module:DisplayHelper.outlineInstances} to {@link https://cesiumjs.org/Cesium/Build/Documentation/Scene.html|Scene.primitives}.
    */
   DisplayHelper.prototype.addOutlineInstancesToPrimitives = function(viewer) {
     viewer.scene.primitives.add(new Cesium.Primitive({
@@ -221,12 +261,12 @@ define([
 
 
   /**
-   * @description
+   * Display paths using edges value of {@link module:DisplayHelper.gmlDataContainer}.
+   * @param {Cesium.Viewer} viewer
    */
   DisplayHelper.prototype.displayPath = function(viewer) {
 
-    console.log(this.gmlDataContainer.edges);
-    // Displaying the edges
+    /** Displaying the edges. */
     for (var i = 0; i < this.gmlDataContainer.edges.length; i++) {
 
       var line = viewer.entities.add({
@@ -236,21 +276,31 @@ define([
             new Cesium.Cartesian3(
               this.gmlDataContainer.edges[i].stateMembers[0].coordinates[0],
               this.gmlDataContainer.edges[i].stateMembers[0].coordinates[1],
-              this.gmlDataContainer.edges[i].stateMembers[0].coordinates[2]+0.2),
+              this.gmlDataContainer.edges[i].stateMembers[0].coordinates[2] + 0.2),
             new Cesium.Cartesian3(
               this.gmlDataContainer.edges[i].stateMembers[1].coordinates[0],
               this.gmlDataContainer.edges[i].stateMembers[1].coordinates[1],
-              this.gmlDataContainer.edges[i].stateMembers[1].coordinates[2]+0.2)
+              this.gmlDataContainer.edges[i].stateMembers[1].coordinates[2] + 0.2)
           ],
           followSurface: new Cesium.ConstantProperty(true),
-          width : 50,
+          width: 50,
           distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8.0),
-          material : Cesium.Color.WHITE.withAlpha(0.8),
-          outline : true, // height or extrudedHeight must be set for outlines to display
-          outlineColor : Cesium.Color.WHITE
+          material: Cesium.Color.WHITE.withAlpha(0.8),
+          outline: true,
+          /** height or extrudedHeight must be set for outlines to display */
+          outlineColor: Cesium.Color.WHITE
         }
       });
     }
+  }
+
+  DisplayHelper.prototype.importGLBFile = function(viewer, position, uri) {
+    viewer.entities.add({
+      position: position,
+      model: {
+        uri: uri
+      }
+    });
   }
 
 

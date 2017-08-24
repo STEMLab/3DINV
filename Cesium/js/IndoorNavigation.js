@@ -1,25 +1,24 @@
 /**
- * This module contains the functions required to navigate in 3D buildings built in DisplayHelper.
- * Unlike existing maps, the indoor space viewer is restricted due to the spatial factor of the wall.
- * With this in mind, this module ensures that the user moves only on the network defined in the IndoorGML file to limit unusual behavior such as user penetration through the wall.
+ * This module provides functions using for navigating building that drew by {@link module: DisplayHelper}.</br>
+ * You can navigate the building samply giving these functions to button as onClick action or some the other way.
  * @module IndoorNavigation
  */
 define([
   "./Objects/MoveState",
   "./Objects/RoomInfo",
-  "./Objects/Coordination"
+  "./Objects/Coordinate"
 ], function(
   MoveState,
   RoomInfo,
-  Coordination
+  Coordinate
 ) {
   'use strict';
 
   /**
-   * Create new IndoorNavigation
-   * @constructor module:IndoorNavigation
+   * Create new IndoorNavigation.
+   * @alias module:IndoorNavigation
    * @param {Cesium.Viewer} viewer
-   * @param {GMLDataContainer} gmlDataContainer This value should be same with using in DisplayHelper module.
+   * @param {GMLDataContainer} gmlDataContainer This value should be same with using in {@link module:DisplayHelper}.
    */
   function IndoorNavigation(viewer, gmlDataContainer) {
 
@@ -28,35 +27,61 @@ define([
     this.scene = viewer.scene;
     this.camera = viewer.camera;
 
-    /** The angle, in radian, to rotate.
+    /**
+     * The angle, in radian, to rotate.
      * @default 0.1
      */
     this.turnRate = 0.1;
 
-    /** The amount of change in T when the camera moves once.
-     * A detailed description of T is given in MoveState. */
+    /**
+     * The amount of change in T when the camera moves once.</br>
+     * A detailed description of T is given in {@link MoveState}.
+     * @default 0.5
+     */
     this.moveRate = 0.5;
 
-
+    /**
+     * This factor used in {@link module:IndoorNavigation.transformCamera} or some functions which required camera moving.</br>
+     * When camera move to some coordinate, camera's z coordinate will move as much as zfactor added from its target coordinate.</br>
+     * This value is intended to provide users with adequate navigating by demonstrating the entire area of the space.</br>
+     * If the zfactor is not given, the camera will move directly onto the floor and this is not the appropriate UI for the user.
+     * @default 2
+     */
     this.zfactor = 2;
 
-    this.currentEdge = -1; // test data
+    /**
+     * The amount to zoom in or out.
+     * @default 0.2
+     */
+    this.zoomRate = 0.2;
 
+    /**
+     * It defined from {@link MoveState}.</br>
+     * This value uses to control movement of the camera.
+     */
     this.nowMoveState = new MoveState();
+
+    /**
+     * @default 1.568
+     */
+    this.threshold = 1.568;
+
+    /**
+     * key : href, value : {@link RoomInfo}
+     */
     this.roomData = new Map();
 
     this.sectionData = [];
     this.floorData = [];
 
-    this.makeRoomData();
-
+    this.setRoomData();
 
   }
 
 
 
   /**
-   * Set trunRate value.
+   * Set {@link module:IndoorNavigation.turnRate} value.
    * @param {Number} turnRate This angle, in radian, to rotate.
    */
   IndoorNavigation.prototype.setTurnRate = function(turnRate) {
@@ -64,29 +89,66 @@ define([
   }
 
 
+
   /**
-   * Set moveRate value.
+   * Set {@link module:IndoorNavigation.moveRate} value.
    * @param {Number} moveRate This angle, in radian, to rotate.
    */
   IndoorNavigation.prototype.setTurnRate = function(moveRate) {
-    this.turnRate = turnRate;
+    if (1 % moveRate == 0) {
+      this.moveRate = moveRate;
+    } else {
+      console.log("error! Invalid moveRate. 1 mod moveRate should be 0.");
+    }
   }
 
 
 
   /**
+   * Set {@link module:IndoorNavigation.zoomRate} value.
+   * @param {Number} zoomRate This angle, in radian, to rotate.
+   */
+  IndoorNavigation.prototype.setTurnRate = function(zoomRate) {
+    this.zoomRate = zoomRate;
+  }
+
+
+
+  /**
+   * Set {@link module:IndoorNavigation.threshold} value.
+   * @param {Number} threshold
+   */
+  IndoorNavigation.prototype.setThreshold = function(threshold) {
+    this.threshold = threshold;
+  }
+
+
+
+  /**
+   * If you want to use tree view containg room data, you can use this function for calling setting function of tree view in html.</br>
+   * Recommand tree view plugin is {@link https://github.com/vakata/jstree|jstree}.</br>
+   * Make sure that name of function which setting tree view are `setTreeView(data)` like below.
+   * ```
+   * <script>
+   *  function setTreeView(data) {
+   *    $(function() {
+   *      $('#jstree').jstree(data);
+   *    });
+   *  }
+   * </script>
+   * ```
    */
   IndoorNavigation.prototype.setTreeViewNavigation = function() {
-    // var json = this.makeRoomInfoToJson();
-    var json = this.makeRoomDataToJson();
-    setTreeView(json); // this function must in html
+    var data = this.makeRoomDataToJson();
+    setTreeView(data); // this function must in html
   }
 
 
 
   /**
+   * Set {@link module:IndoorNavigation.roomData} value.
    */
-  IndoorNavigation.prototype.makeRoomData = function() {
+  IndoorNavigation.prototype.setRoomData = function() {
 
     var nowSection = "";
     var nowFloor = "";
@@ -133,6 +195,8 @@ define([
 
 
   /**
+   * Make Json object for tree view.</br>
+   * Json object which made in this function will follow the form requested by {@link https://github.com/vakata/jstree|jstree}.
    * @return {Object}
    */
   IndoorNavigation.prototype.makeRoomDataToJson = function() {
@@ -156,10 +220,10 @@ define([
       }
     }
 
-    for (var key of this.roomData.keys()){
+    for (var key of this.roomData.keys()) {
       var roomInfo = new Object();
       roomInfo.id = key;
-      roomInfo.parent = this.roomData.get(key).section+this.roomData.get(key).floor;
+      roomInfo.parent = this.roomData.get(key).section + this.roomData.get(key).floor;
       roomInfo.text = key;
       roomInfo.icon = "glyphicon glyphicon-leaf";
       roomArray.push(roomInfo);
@@ -194,6 +258,13 @@ define([
 
 
   /**
+   * If click one value of tree view, camera move to a space where that value pointed.</br>
+   * To set onclick this function to tree view, you should call function in `main.js` like below.</br>
+   * ```
+   * $('#jstree').on("changed.jstree", function(e, data) {
+   *  indoorNavigation.onClickTreeView(data.selected);
+   * });
+   * ```
    * @param {Array} roomHref
    */
   IndoorNavigation.prototype.onClickTreeView = function(roomHref) {
@@ -212,9 +283,9 @@ define([
 
     this.camera.flyTo({
       destination: new Cesium.Cartesian3(
-        pickedRoom.coordination.x,
-        pickedRoom.coordination.y,
-        pickedRoom.coordination.z + this.zfactor
+        pickedRoom.coordinate.x,
+        pickedRoom.coordinate.y,
+        pickedRoom.coordinate.z + this.zfactor
       ),
       orientation: {
         heading: Cesium.Math.toRadians(90.0),
@@ -229,23 +300,26 @@ define([
 
 
   /**
+   * This function make camera turn to left as much as {@link module:IndoorNavigation.turnRate}.
    */
-  IndoorNavigation.prototype.onClickLeftTurnBtn = function() {
+  IndoorNavigation.prototype.actionTurnLeft = function() {
     this.camera.lookLeft(this.turnRate);
   }
 
 
 
   /**
+   * This function make camera turn to right as much as {@link module:IndoorNavigation.turnRate}.
    */
-  IndoorNavigation.prototype.onClickRightTurnBtn = function() {
+  IndoorNavigation.prototype.actionTurnRight = function() {
     this.camera.lookRight(this.turnRate);
   }
 
 
   /**
+   * This function make the camera turn to due east and place it horizontally on the ground.
    */
-  IndoorNavigation.prototype.onClickBackToOrigianlViewBtn = function() {
+  IndoorNavigation.prototype.actionTurnStraight = function() {
     this.camera.setView({
       orientation: {
         heading: Cesium.Math.toRadians(90.0),
@@ -258,71 +332,57 @@ define([
 
 
   /**
+   *  This function make camera zoom in as much as {@link module:IndoorNavigation.zoomRate}.
    */
-  IndoorNavigation.prototype.onClickZoomInBtn = function() {
-    this.camera.zoomIn(0.2);
+  IndoorNavigation.prototype.actionZoomIn = function() {
+    this.camera.zoomIn(this.zoomRate);
   }
 
 
 
   /**
+   * This function make camera zoom out as much as {@link module:IndoorNavigation.zoomRate}.
    */
-  IndoorNavigation.prototype.onClickZoomOutBtn = function() {
-    this.camera.zoomOut(0.2);
+  IndoorNavigation.prototype.actionZoomOut = function() {
+    this.camera.zoomOut(this.zoomRate);
   }
 
 
 
   /**
+   * This function make camera move front, if {@link module:IndoorNavigation.nowMoveState} and the camera is on the right condition.</br>
+   * The right conditions include:</br>
+   *  1. nowMoveState should have proper source and destination. This will be checked by `checkAndAssignDst`.
+   *  2. The heading of the camera should direct source and destination of nowMoveState. This will be checked by `getDirection`
+   * </br></br>
+   * <img src="./img/img_actionMoveFront.png" width="600" style="margin-left: 50px;" >
    */
-  IndoorNavigation.prototype.checkAndAssignDst = function() {
+  IndoorNavigation.prototype.actionMoveFront = function() {
 
-    if (this.nowMoveState.T == 0) { // camera is on src node, find new dst
-      console.log("now on src");
-
-      var tmp = this.getNewDst();
-      if (tmp != null) this.nowMoveState.dstHref = tmp.href;
-      else this.nowMoveState.dstHref = null;
-    } else if (this.nowMoveState.T == 1) { // camera is on dst node, find new dst
-      console.log("now on dst");
-      this.nowMoveState.srcHref = this.nowMoveState.dstHref;
-
-      var tmp = this.getNewDst();
-      if (tmp != null) this.nowMoveState.dstHref = tmp.href;
-      else this.nowMoveState.dstHref = null;
-      this.nowMoveState.T = 0;
-
-    }
-  }
-
-
-
-  /**
-   */
-  IndoorNavigation.prototype.onClickMoveFrontBtn = function() {
-
+    /** check first condition*/
     this.checkAndAssignDst();
 
-    var now = new Coordination(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+    var now = new Coordinate(this.camera.position.x, this.camera.position.y, this.camera.position.z);
 
     console.log(this.nowMoveState.dstHref);
     if (this.nowMoveState.dstHref != null) {
+
+      /** check second condition */
       var direction = this.getDirection(
-        this.roomData.get(this.nowMoveState.srcHref).coordination,
-        this.roomData.get(this.nowMoveState.dstHref).coordination,
-        now,
-        Cesium.Math.toDegrees(this.camera.heading));
+        this.roomData.get(this.nowMoveState.srcHref).coordinate,
+        this.roomData.get(this.nowMoveState.dstHref).coordinate,
+        this.camera.direction);
 
       if (direction == 0 && this.nowMoveState.T != 0) { //camera see src direction
         this.moveToSrc(
-          this.roomData.get(this.nowMoveState.srcHref).coordination,
-          this.roomData.get(this.nowMoveState.dstHref).coordination,
+          this.roomData.get(this.nowMoveState.srcHref).coordinate,
+          this.roomData.get(this.nowMoveState.dstHref).coordinate,
           this.nowMoveState.T);
         this.nowMoveState.T -= this.moveRate;
       } else if (direction == 1 && this.nowMoveState.T != 1) { //camera see dst direction
         this.moveToDst(
-          this.roomData.get(this.nowMoveState.srcHref).coordination,
-          this.roomData.get(this.nowMoveState.dstHref).coordination,
+          this.roomData.get(this.nowMoveState.srcHref).coordinate,
+          this.roomData.get(this.nowMoveState.dstHref).coordinate,
           this.nowMoveState.T);
         this.nowMoveState.T += this.moveRate;
       } else if (direction == -1) {} else {
@@ -334,35 +394,40 @@ define([
 
 
   /**
+   * This function make camera move back, if {@link module:IndoorNavigation.nowMoveState} and the camera is on the right condition.</br>
+   * The conditions for moving is same as `actionMoveFront`, different is in `actionMoveFront` when both of condition appropriate satisfied the camera move to front
+   * but in this function the will move to back.
    */
-  IndoorNavigation.prototype.onClickMoveBackwardBtn = function() {
+  IndoorNavigation.prototype.actionMoveBack = function() {
 
+    /** check first condition*/
     this.checkAndAssignDst();
 
-    var now = new Coordination(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+    var now = new Coordinate(this.camera.position.x, this.camera.position.y, this.camera.position.z);
 
     if (this.nowMoveState.dstHref != null) {
+
+      /** check second condition */
       var direction = this.getDirection(
-        this.roomData.get(this.nowMoveState.srcHref).coordination,
-        this.roomData.get(this.nowMoveState.dstHref).coordination,
-        now,
-        Cesium.Math.toDegrees(this.camera.heading));
-      console.log(direction)
+        this.roomData.get(this.nowMoveState.srcHref).coordinate,
+        this.roomData.get(this.nowMoveState.dstHref).coordinate,
+        this.camera.direction);
+      console.log(direction);
 
       if (direction == 0 && this.nowMoveState.T != 1) {
         this.moveToDst(
-          this.roomData.get(this.nowMoveState.srcHref).coordination,
-          this.roomData.get(this.nowMoveState.dstHref).coordination,
+          this.roomData.get(this.nowMoveState.srcHref).coordinate,
+          this.roomData.get(this.nowMoveState.dstHref).coordinate,
           this.nowMoveState.T);
         this.nowMoveState.T += moveRate;
       } else if (direction == 1 && this.nowMoveState.T != 0) {
         this.moveToSrc(
-          this.roomData.get(this.nowMoveState.srcHref).coordination,
-          this.roomData.get(this.nowMoveState.dstHref).coordination,
+          this.roomData.get(this.nowMoveState.srcHref).coordinate,
+          this.roomData.get(this.nowMoveState.dstHref).coordinate,
           this.nowMoveState.T);
         nowMoveState.T -= moveRate;
       } else if (direction == -1) {
-
+        /** do nothing */
       } else {
         console.log("error! ", direction);
       }
@@ -371,9 +436,280 @@ define([
 
 
 
+
   /**
-   * @description transform position of camera using flyTo function
-   * @param {Coordination} newPosition
+   * Check the condition 1 : nowMoveState should have proper source and destination.</br>
+   * This function check that the camera is whether on traveling one edge or not.</br>
+   * If the camera is not in the middle of the edge, which means the camera is on some node, assign the node that camera located at the source of nowMoveState and search new destination using `getNewDst`.
+   */
+  IndoorNavigation.prototype.checkAndAssignDst = function() {
+
+    if (this.nowMoveState.T == 0) { /** camera is on src node, find new dst */
+      // console.log("now on src");
+
+      var newDst = this.getNewDst();
+      if (newDst != null) this.nowMoveState.dstHref = newDst.href;
+      else this.nowMoveState.dstHref = null;
+    } else if (this.nowMoveState.T == 1) { /** camera is on dst node, find new dst */
+      // console.log("now on dst");
+      this.nowMoveState.srcHref = this.nowMoveState.dstHref;
+
+      var newDst = this.getNewDst();
+      if (newDst != null) this.nowMoveState.dstHref = newDst.href;
+      else this.nowMoveState.dstHref = null;
+      this.nowMoveState.T = 0;
+
+    }
+  }
+
+
+
+  /**
+   * Find new destination for nowMoveState.</br>
+   * The new destination will satisfy two conditions:</br>
+   * 1. The new destination is connected with source of nowMoveState.
+   * 2. The location of new destination is most similar to the location, where the camera stare, out of the nodes connected with source of nowMoveState.
+   * @return {Coordinate}
+   */
+  IndoorNavigation.prototype.getNewDst = function() {
+
+    /** Find arry of coordinate which satisfy first condition */
+    var dstCandidate = this.getDstCandidateArray();
+
+    /** Find coordinate which satisfy second condition out of `dstCandidate`*/
+    var newDstCoordinate = this.getMostSimilarNode(dstCandidate);
+
+    return newDstCoordinate;
+  }
+
+
+
+  /**
+   * Returns array of {@link Coordinate} connected with source of nowMoveState.
+   * @return {Array}
+   */
+  IndoorNavigation.prototype.getDstCandidateArray = function() {
+
+    var filteredTransitionMember = new Array();
+    filteredTransitionMember = this.getEdgesConnectedToNowSrc();
+
+    var dstCandidate = new Array();
+    for (var i = 0; i < filteredTransitionMember.length; i++) {
+      if (filteredTransitionMember[i].connects[0] == this.nowMoveState.srcHref) {
+        var tmpCoor = new Coordinate(
+          filteredTransitionMember[i].stateMembers[1].coordinates[0],
+          filteredTransitionMember[i].stateMembers[1].coordinates[1],
+          filteredTransitionMember[i].stateMembers[1].coordinates[2],
+          filteredTransitionMember[i].connects[1]);
+        dstCandidate.push(tmpCoor);
+      } else {
+        var tmpCoor = new Coordinate(
+          filteredTransitionMember[i].stateMembers[0].coordinates[0],
+          filteredTransitionMember[i].stateMembers[0].coordinates[1],
+          filteredTransitionMember[i].stateMembers[0].coordinates[2],
+          filteredTransitionMember[i].connects[0]);
+        dstCandidate.push(tmpCoor);
+      }
+    }
+    // console.log(dstCandidate);
+    return dstCandidate;
+  }
+
+
+
+  /**
+   * Returns all edges connected with source of nowMoveState.
+   * @return {Array} Array of {@link TransitionMember}
+   */
+  IndoorNavigation.prototype.getEdgesConnectedToNowSrc = function() {
+
+    var connectedEdges = [];
+    var edgesLen = this.gmlDataContainer.edges.length;
+
+    for (var i = 0; i < edgesLen; i++) {
+      if (this.gmlDataContainer.edges[i].connects[0] == this.nowMoveState.srcHref) {
+        connectedEdges.push(this.gmlDataContainer.edges[i]);
+      } else if (this.gmlDataContainer.edges[i].connects[1] == this.nowMoveState.srcHref) {
+        connectedEdges.push(this.gmlDataContainer.edges[i]);
+      }
+    }
+
+    return connectedEdges;
+  }
+
+
+
+  /**
+   * This function works as follows.
+   * 1. Calculate the angle between the position of the camera and direction where camera stare of the camera.</br>
+   * 2. Calculate the angles between the position of destination candidate and direction where camera stare of the camera.
+   * 3. Select one of the values found in 2 that most closely matches the angle found in 1. And return its Coordinate.</br>
+   *
+   * <table style="width:200px;">
+   *  <tr>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode1.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode2.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode3.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode4.png" height="100px"></td>
+   *  </tr>
+   *  <tr>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.1 src node and nodes associated with it.</p></td>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.2 angle between position of camera and direction of camera</p></td>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.3 angles between the position of destination candidate and direction of the camera.</p></td>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.4 Select one that most closely matches θ_{0}</p></td>
+   *  </tr>
+   * </table>
+   * @param {Array} dstCandidate Array of {@link Coordinate}.</br>Coordinates connected with source of nowMoveState.
+   * @return {Coordinate}
+   */
+  IndoorNavigation.prototype.getMostSimilarNode = function(dstCandidate) {
+    var dstCandidateAngle = new Array();
+
+    /** Calculate the angle between the position of the camera and direction where camera stare of the camera. */
+    var nowAngle = Cesium.Cartesian3.angleBetween(this.camera.position, this.camera.direction);
+
+    /** Calculate the angles between the position of destination candidate and direction where camera stare of the camera. */
+    for (var i = 0; i < dstCandidate.length; i++) {
+      var tmpAngle = Cesium.Cartesian3.angleBetween(
+        new Cesium.Cartesian3(dstCandidate[i].x, dstCandidate[i].y, dstCandidate[i].z),
+        this.camera.direction);
+
+      dstCandidateAngle.push(tmpAngle);
+    }
+
+    /** Select one of the values found in 2 that most closely matches the angle found in 1. And return its Coordinate. */
+    var min = -9999;
+    if (dstCandidateAngle.length != 0) {
+      min = dstCandidateAngle.reduce(function(previous, current) {
+        return previous > current ? current : previous;
+      });
+    }
+
+    var indexOfMin = dstCandidateAngle.indexOf(min);
+
+    if (indexOfMin == -1) {
+      return null;
+    }
+
+    // console.log(dstCandidateAngle, dstCandidate[indexOfMin]);
+
+    return dstCandidate[indexOfMin];
+  }
+
+
+
+  /**
+   * Determines whether to move from now to src or dst.</br>
+   * This function finds the angle between src, dst, and dir, and uses that angle to select the direction.</br>
+   * When the angle between src and dir is referred to as srcAngle
+   * and the angle between dst and dir is referred to dstAngle,
+   * the direction is defined in the three cases below:
+   * 1. direction = src : `srcAngle < dstAngle` and `dstAngle < threshold`
+   * 2. direction = dst : `srcAngle > dstAngle` and `srcAngle < threshold`
+   * 3. no direction : Failure to satisfy 1 and 2</br>
+   *
+   * <table style="width:200px;">
+   *  <tr>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection4.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection2.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection1.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection3.png" height="250px"></td>
+   *  </tr>
+   *  <tr>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.4 the situation</p></td>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.5 direction = src</p></td>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.6 direction = dst</p></td>
+   *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.7 no direction</p></td>
+   *  </tr>
+   * </table>
+   * @param {Coordinate} src coordinate of source
+   * @param {Coordinate} dst coordinate of destination
+   * @param {Cesium.Cartesian3} dir coordinate of camera's direction
+   * @return {number} direction, 0 : source, 1 : destination, -1 : under threshold / not move / no direction
+   */
+  IndoorNavigation.prototype.getDirection = function(src, dst, dir) {
+
+    var srcAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(src.x, src.y, src.z), dir);
+    var dstAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(dst.x, dst.y, dst.z), dir);
+
+    // console.log("srcAngle:", srcAngle, "dstAngle:", dstAngle);
+
+    var direction;
+
+    var diff = srcAngle - dstAngle;
+
+    if (diff < 0 && srcAngle < this.threshold) direction = 0;
+    else if (diff > 0 && dstAngle > this.threshold) direction = 1;
+    else direction = -1;
+
+    return direction;
+  }
+
+
+
+  /**
+   * Move the camera as much as moveRate to src. </br>
+   * A detailed description of the method of movement is described in {@link MoveState.T}.
+   * @param {Coordinate} src coordinate of source
+   * @param {Coordinate} dst coordinate of destination
+   * @param {number} nowT
+   */
+  IndoorNavigation.prototype.moveToSrc = function(src, dst, nowT) {
+    if (nowT == 0) {
+      console.log("not move, now on src");
+    } else {
+      console.log("move to src");
+      var newT = nowT - this.moveRate;
+      var moved = this.getMovedCoordinate(newT, src, dst);
+      this.transformCamera(moved);
+    }
+  }
+
+
+
+  /**
+   * Move the camera as much as moveRate to dst. </br>
+   * A detailed description of the method of movement is described in {@link MoveState.T}.
+   * @param {Coordinate} src coordinate of source
+   * @param {Coordinate} dst coordinate of destination
+   * @param {number} nowT
+   */
+  IndoorNavigation.prototype.moveToDst = function(src, dst, nowT) {
+    if (nowT == 1) {
+      console.log("not move, now on dst");
+    } else {
+      console.log("move to dst");
+      var newT = nowT + this.moveRate;
+      var moved = this.getMovedCoordinate(newT, src, dst);
+      this.transformCamera(moved);
+
+    }
+  }
+
+
+
+  /**
+   * Calculate the coordinates that will be moved.
+   * A detailed description of the calculation method is given in {@link MoveState.T}.
+   * @param {number} newT
+   * @param {Coordinate} src coordinate of source
+   * @param {Coordinate} dst coordinate of destination
+   * @return {Coordinate}
+   */
+  IndoorNavigation.prototype.getMovedCoordinate = function(newT, src, dst) {
+    var moved = new Coordinate();
+    moved.x = newT * (dst.x - src.x) + src.x;
+    moved.y = newT * (dst.y - src.y) + src.y;
+    moved.z = newT * (dst.z - src.z) + src.z;
+
+    return moved;
+  }
+
+
+
+  /**
+   * Transform position of camera using flyTo function of Cesium
+   * @param {Coordinate} newPosition
    */
   IndoorNavigation.prototype.transformCamera = function(newPosition) {
 
@@ -399,44 +735,11 @@ define([
 
 
   /**
-   * @description Determines whether to move from now to src or dst.
-   * @param {Coordination} src coordinate of source
-   * @param {Coordination} dst coordinate of destination
-   * @param {Coordination} now coordinate of camera
-   * @param {number} heading camera heading
-   * @return {number} direction, 0 : source, 1 : destination, -1 : under threshold/not move
-   */
-  IndoorNavigation.prototype.getDirection = function(src, dst, now, heading) {
-
-    var srcAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(src.x, src.y, src.z), this.camera.direction);
-    var dstAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(dst.x, dst.y, dst.z), this.camera.direction);
-
-    //	console.log("srcAngle:", srcAngle, "dstAngle:", dstAngle);
-
-    var threshold = 1.568;
-
-    var direction; // dst : 1, src : 0
-
-    var diff = srcAngle - dstAngle;
-
-    if (diff < 0 && srcAngle < threshold) direction = 0;
-    else if (diff > 0 && dstAngle > threshold) direction = 1;
-    else direction = -1;
-
-    //    if     (direction == 0)  console.log("go ", nowMoveState.srcHref);
-    //    else if(direction == 1)  console.log("go ", nowMoveState.dstHref);
-    //	else                     console.log("under threshold");
-
-    return direction;
-  }
-
-
-
-  /**
-   * @description The following T means the parameter in the parameter equation in space.
-   * @param {Coordination} src coordinate of source
-   * @param {Coordination} dst coordinate of destination
-   * @param {Coordination} now coordinate of camera
+   * Calculate T for coordinates.
+   * A detailed description of T is given in {@link MoveState.T}.
+   * @param {Coordinate} src coordinate of source
+   * @param {Coordinate} dst coordinate of destination
+   * @param {Coordinate} now coordinate of camera
    * @return {number} T
    */
   IndoorNavigation.prototype.getT = function(src, dst, now) {
@@ -446,167 +749,7 @@ define([
 
 
   /**
-   * @param {number} newT
-   * @param {Coordination} src coordinate of source
-   * @param {Coordination} dst coordinate of destination
-   * @return {Coordination}
-   */
-  IndoorNavigation.prototype.getMovedCoordination = function(newT, src, dst) {
-    var moved = new Coordination();
-    moved.x = newT * (dst.x - src.x) + src.x;
-    moved.y = newT * (dst.y - src.y) + src.y;
-    moved.z = newT * (dst.z - src.z) + src.z;
-
-    return moved;
-  }
-
-
-
-  /**
-   * @param {Coordination} src coordinate of source
-   * @param {Coordination} dst coordinate of destination
-   * @param {number} nowT
-   */
-  IndoorNavigation.prototype.moveToSrc = function(src, dst, nowT) {
-    if (nowT == 0) {
-      console.log("not move, now on src");
-    } // do nothing, camera no src
-    else {
-      console.log("move to src");
-      var newT = nowT - this.moveRate;
-      var moved = this.getMovedCoordination(newT, src, dst);
-      this.transformCamera(moved);
-    }
-  }
-
-
-
-  /**
-   * @param {Coordination} src coordinate of source
-   * @param {Coordination} dst coordinate of destination
-   * @param {number} nowT
-   */
-  IndoorNavigation.prototype.moveToDst = function(src, dst, nowT) {
-    if (nowT == 1) {
-      console.log("not move, now on dst");
-    } // do nothing, camera no dst
-    else {
-      console.log("move to dst");
-      var newT = nowT + this.moveRate;
-      var moved = this.getMovedCoordination(newT, src, dst);
-      this.transformCamera(moved);
-    }
-  }
-
-
-
-  /**
-   * @param {Array} dstCandidate
-   * @return {Coordination}
-   */
-  IndoorNavigation.prototype.getMostSimilarNode = function(dstCandidate) {
-    var dstCandidateAngle = new Array();
-
-    var nowAngle = Cesium.Cartesian3.angleBetween(this.camera.position, this.camera.direction);
-
-    for (var i = 0; i < dstCandidate.length; i++) {
-      var tmpAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(dstCandidate[i].x,
-          dstCandidate[i].y,
-          dstCandidate[i].z),
-        this.camera.direction);
-
-      dstCandidateAngle.push(tmpAngle);
-    }
-
-
-    var min = -9999;
-    if (dstCandidateAngle.length != 0) {
-      min = dstCandidateAngle.reduce(function(previous, current) {
-        return previous > current ? current : previous;
-      });
-    }
-
-    var indexOfMin = dstCandidateAngle.indexOf(min);
-
-    if (indexOfMin == -1) {
-      return null;
-    }
-    console.log(dstCandidateAngle, dstCandidate[indexOfMin]);
-
-    return dstCandidate[indexOfMin];
-  }
-
-
-  /**
-   * Returns all edges connected with nowMoveState.src
-   * @return {Array} Array of all edges associated with nowMoveState.src
-   */
-  IndoorNavigation.prototype.getConnectedToNowSrc = function() {
-
-    var connectedEdges = [];
-    var edgesLen = this.gmlDataContainer.edges.length;
-
-    for (var i = 0; i < edgesLen; i++) {
-      if (this.gmlDataContainer.edges[i].connects[0] == this.nowMoveState.srcHref) {
-        connectedEdges.push(this.gmlDataContainer.edges[i]);
-      } else if (this.gmlDataContainer.edges[i].connects[1] == this.nowMoveState.srcHref) {
-        connectedEdges.push(this.gmlDataContainer.edges[i]);
-      }
-    }
-
-    return connectedEdges;
-  }
-
-
-
-  /**
-   * Returns coordinates connected with nowMoveState.src
-   * @return {Array} Array of all Coordination associated with nowMoveState.src
-   */
-  IndoorNavigation.prototype.getDstCandidateArray = function() {
-
-    var filteredTransitionMember = new Array();
-    filteredTransitionMember = this.getConnectedToNowSrc();
-
-    var dstCandidate = new Array();
-    for (var i = 0; i < filteredTransitionMember.length; i++) {
-      if (filteredTransitionMember[i].connects[0] == this.nowMoveState.srcHref) {
-        var tmpCoor = new Coordination(
-          filteredTransitionMember[i].stateMembers[1].coordinates[0],
-          filteredTransitionMember[i].stateMembers[1].coordinates[1],
-          filteredTransitionMember[i].stateMembers[1].coordinates[2],
-          filteredTransitionMember[i].connects[1]);
-        dstCandidate.push(tmpCoor);
-      } else {
-        var tmpCoor = new Coordination(
-          filteredTransitionMember[i].stateMembers[0].coordinates[0],
-          filteredTransitionMember[i].stateMembers[0].coordinates[1],
-          filteredTransitionMember[i].stateMembers[0].coordinates[2],
-          filteredTransitionMember[i].connects[0]);
-        dstCandidate.push(tmpCoor);
-      }
-    }
-
-    console.log(dstCandidate);
-    return dstCandidate;
-  }
-
-
-
-  /**
-   */
-  IndoorNavigation.prototype.getNewDst = function() {
-
-    var dstCandidate = this.getDstCandidateArray();
-    var newDstCoordination = this.getMostSimilarNode(dstCandidate);
-
-    return newDstCoordination;
-  }
-
-
-
-  /**
-   * Disable default eventHandlers of Cesium
+   * Disable default eventHandlers of Cesium.
    */
   IndoorNavigation.prototype.disableDefaultEventHandlers = function() {
     this.scene.screenSpaceCameraController.enableRotate = false;
@@ -619,59 +762,59 @@ define([
 
 
   /**
+   *
+   * @param {Cesium.Cesium3DTileFeature} feature Information about the items selected in the viewer.
    */
   IndoorNavigation.prototype.onClickEdge = function(feature) {
     if (Cesium.defined(feature['id']['polyline'])) {
 
+      /** Abstract edge data from path */
       var lineName = feature['id']['name'];
 
-      var polylineSrc = new Coordination(feature['id']['polyline']['positions'].getValue(0)[0].x,
+      var polylineSrc = new Coordinate(
+        feature['id']['polyline']['positions'].getValue(0)[0].x,
         feature['id']['polyline']['positions'].getValue(0)[0].y,
         feature['id']['polyline']['positions'].getValue(0)[0].z,
         lineName.substring(lineName.indexOf("#"), lineName.indexOf(",")));
 
-      var polylineDst = new Coordination(feature['id']['polyline']['positions'].getValue(0)[1].x,
+      var polylineDst = new Coordinate(
+        feature['id']['polyline']['positions'].getValue(0)[1].x,
         feature['id']['polyline']['positions'].getValue(0)[1].y,
         feature['id']['polyline']['positions'].getValue(0)[1].z,
         lineName.substring(lineName.indexOf(",") + 1));
 
-      var now = this.roomData.get(this.nowMoveState.srcHref).coordination;
+      /** coordinate data where camera exist now. */
+      var now = this.roomData.get(this.nowMoveState.srcHref).coordinate;
 
       if (now.href != polylineSrc.href && now.href != polylineDst.href) {
+        /** if value of clicked edge not matches from nowMoveState data, set nowMoveState to edge data */
         this.setMoveStateForOnClickEdge(polylineSrc, polylineDst);
-      } else if(now.href == polylineSrc.href){
+      } else if (now.href == polylineSrc.href) {
         this.nowMoveState.dstHref = polylineDst.href;
-      } else if(now.href == polylineDst.href){
+      } else if (now.href == polylineDst.href) {
         this.nowMoveState.srcHref = polylineSrc.href;
       }
 
       var direction = this.getDirection(
-        this.roomData.get(this.nowMoveState.srcHref).coordination,
-        this.roomData.get(this.nowMoveState.dstHref).coordination,
-        new Coordination(this.camera.position.x, this.camera.position.y, this.camera.position.z),
-        Cesium.Math.toDegrees(this.camera.heading));
-
-      console.log(direction, this.nowMoveState);
+        this.roomData.get(this.nowMoveState.srcHref).coordinate,
+        this.roomData.get(this.nowMoveState.dstHref).coordinate,
+        this.camera.direction);
 
       if (direction == 0 && this.nowMoveState.T != 0) { //camera see src direction
         this.moveToSrc(
-          this.roomData.get(this.nowMoveState.srcHref).coordination,
-          this.roomData.get(this.nowMoveState.dstHref).coordination,
+          this.roomData.get(this.nowMoveState.srcHref).coordinate,
+          this.roomData.get(this.nowMoveState.dstHref).coordinate,
           this.nowMoveState.T);
         this.nowMoveState.T -= this.moveRate;
       } else if (direction == 1 && this.nowMoveState.T != 1) { //camera see dst direction
         this.moveToDst(
-          this.roomData.get(this.nowMoveState.srcHref).coordination,
-          this.roomData.get(this.nowMoveState.dstHref).coordination,
+          this.roomData.get(this.nowMoveState.srcHref).coordinate,
+          this.roomData.get(this.nowMoveState.dstHref).coordinate,
           this.nowMoveState.T);
         this.nowMoveState.T += this.moveRate;
       } else if (direction == -1) {} else {
         console.log("error! ");
       }
-
-      console.log("polylineSrc", polylineSrc);
-      console.log("polylineDst", polylineDst);
-      console.log("now", now);
     } else {
       console.log("undefined");
     }
