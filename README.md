@@ -13,7 +13,6 @@ To solve these problems, we should use network information to define the camera 
 This indoor network information is predefined in indoorGML data.
 The user will browse the indoor space only through the predefined network, which can prevent the collision and give continuity to the indoor space seen by the user. Through this, the project can solve the problems that the indoor viewer is currently facing, and establish a more comfortable browsing environment.
 
-Specific specifications for this project can be found [here]( https://www.overleaf.com/read/hxtcpypzhchw).
 
 ## Getting Started
 ### Installing
