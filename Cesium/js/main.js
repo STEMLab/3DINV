@@ -10,22 +10,23 @@ require([
   "./GMLDataContainer",
   "./DisplayHelper",
   "./Objects/PrimitiveOption",
-  "json! YOUR JSON FILE PATH",
+  "json!../json/sample_data_lwm_3d.json",
   "./IndoorNavigation"
 ], function(
   GMLDataContainer,
   DisplayHelper,
   PrimitiveOption,
-  YOUR JSON FILE NAME,
+  sample_data_lwm_3d,
   IndoorNavigation,
 ) {
   'use strict';
 
-  console.log(YOUR JSON FILE NAME);
+  console.log(sample_data_lwm_3d);
 
-  var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME);
+  var gmlDataContainer = new GMLDataContainer(sample_data_lwm_3d);
 
-  gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(120.0, 20.0, 0), 0.43); // YOUR BULIDING LOCATION
+  gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(127.1034, 37.51283, 0), 0.43); // LWM
+  // gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(129.082678, 35.234898, 0), -1.5708); // PNU
 
   var displayHelper = new DisplayHelper(gmlDataContainer, viewer);
 
@@ -55,34 +56,6 @@ require([
     indoorNavigation.onClickTreeView(data.selected);
   });
 
-  $('#turnLeftBtn').click(function(){
-    indoorNavigation.actionTurnLeft();
-  });
-
-  $('#turnRightBtn').click(function(){
-    indoorNavigation.actionTurnRight();
-  });
-
-  $('#moveFront').click(function(){
-    indoorNavigation.actionMoveFront();
-  });
-
-  $('#moveBackward').click(function(){
-    indoorNavigation.actionMoveBack();
-  });
-
-  $('#backToOrigianlViewBtn').click(function(){
-    indoorNavigation.actionTurnStraight();
-  });
-
-  $('#zoomIn').click(function(){
-    indoorNavigation.actionZoomIn();
-  });
-
-  $('#zoomOut').click(function(){
-    indoorNavigation.actionZoomOut();
-  });
-
 
   var handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
   handler.setInputAction(function(movement) {
@@ -91,5 +64,38 @@ require([
       indoorNavigation.onClickEdge(feature);
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+
+  $('#controller').click(function(event){
+    var offsetX = event.offsetX == undefined ? event.layerX : event.offsetX;
+    var offsetY = event.offsetY == undefined ? event.layerY : event.offsetY;
+    checkButtonAndExcuteOnClick(offsetX, offsetY);
+  });
+
+  function checkButtonAndExcuteOnClick(offsetX, offsetY){
+
+    if( 66 <= offsetX && offsetX <= 81 && 37 <= offsetY && offsetY <= 56 ){
+      console.log("onclick moveFront");
+      indoorNavigation.actionMoveFront();
+    } else if( 66 <= offsetX && offsetX <= 81 && 91 <= offsetY && offsetY <= 111 ){
+      console.log("onclick moveBack");
+      indoorNavigation.actionMoveFront();
+    } else if( 37 <= offsetX && offsetX <= 57 && 65 <= offsetY && offsetY <= 80 ){
+      console.log("onclick TurnLeft");
+      indoorNavigation.actionTurnLeft();
+    } else if( 92 <= offsetX && offsetX <= 111 && 65 <= offsetY && offsetY <= 80 ){
+      console.log("onclick TurnRight");
+      indoorNavigation.actionTurnRight();
+    } else if( 225 <= offsetX && offsetX <= 255 && 36 <= offsetY && offsetY <= 64 ){
+      console.log("onclick TurnStraight");
+      indoorNavigation.actionTurnStraight();
+    } else if( 204 <= offsetX && offsetX <= 234 && 74 <= offsetY && offsetY <= 104 ){
+      console.log("onclick ZoomIn");
+      indoorNavigation.actionZoomIn();
+    } else if( 249 <= offsetX && offsetX <= 279 && 77 <= offsetY && offsetY <= 107 ){
+      console.log("onclick ZoomOut");
+      indoorNavigation.actionZoomOut();
+    }
+  }
 
 });

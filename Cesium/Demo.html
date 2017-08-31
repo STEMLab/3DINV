@@ -20,16 +20,6 @@
       overflow: hidden;
     }
 
-    .joystick {
-      border-style: hidden;
-      background-color: rgba( 0, 0, 0, 0.5);
-      border-radius: 5px;
-      position: absolute;
-      left: 20px;
-      bottom: 100px;
-      display: block;
-    }
-
     .treeContainer {
       border-style: hidden;
       background-color: rgba( 255, 255, 255, 0.9);
@@ -43,33 +33,42 @@
       height: 30%;
       width: auto%;
     }
+
+    .controller {
+      border-style: hidden;
+      background-color: rgba( 0, 0, 0, 0);
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      display: block;
+    }
   </style>
+
+
 </head>
 
 <body>
 
   <div id="cesiumContainer"></div>
-  <script>var viewer = new Cesium.Viewer('cesiumContainer');</script>
-
-  <div class="joystick">
-    <table style="color:white">
-      <tr>
-        <td><button class="cesium-button cesium-button-toolbar" id="moveFront">▲</button></td>
-      </tr>
-      <tr>
-        <td><button class="cesium-button cesium-button-toolbar" id="turnLeftBtn">◀</button></td>
-        <td><button class="cesium-button cesium-button-toolbar" id="backToOrigianlViewBtn">■</button></td>
-        <td><button class="cesium-button cesium-button-toolbar" id="turnRightBtn">▶</button></td>
-      </tr>
-      <tr>
-        <td><button class="cesium-button cesium-button-toolbar" id="moveBackward">▼</button></td>
-      </tr>
-      <tr>
-        <td><button class="cesium-button cesium-button-toolbar" id="zoomIn">+</button></td>
-        <td><button class="cesium-button cesium-button-toolbar" id="zoomOut">-</button></td>
-      </tr>
-    </table>
-  </div>
+  <script>
+    var viewer = new Cesium.Viewer('cesiumContainer', {
+      'timeline': false,
+      'animation': true,
+      'homeButton': false,
+      'geocoder': false,
+      'fullscreenButton': false,
+      'searchButton': false,
+      'scene3DOnly': false,
+      'orderIndependentTranslucency': false,
+      'terrainShadows': Cesium.ShadowMode.ENABLE,
+      'navigationHelpButton': false,
+      'selectionIndicator': false,
+      'sceneModePicker': false,
+      'infoBox': false,
+      'baseLayerPicker': false,
+      'shadows': false
+    });
+  </script>
 
   <div id="jstree_demo_div" class="treeContainer">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
@@ -82,7 +81,6 @@
   <script src="jstree-bootstrap-theme/dist/jstree.min.js"></script>
   <script>
     function setTreeView(data) {
-
       $(function() {
         // create an instance when the DOM is ready
         $('#jstree').jstree(data);
@@ -90,7 +88,11 @@
     }
   </script>
 
-<script data-main="js/main" src="js/require.js"></script>
+  <div class="controller">
+    <img id="controller" src="./3DINV_Controller/WHITE_SHADOW.png" height="150px" />
+  </div>
+
+  <script data-main="js/main" src="js/require.js"></script>
 </body>
 
 </html>
