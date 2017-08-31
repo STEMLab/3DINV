@@ -16,7 +16,7 @@ require([
   GMLDataContainer,
   DisplayHelper,
   PrimitiveOption,
-  sample_data_lwm_3d,
+  YOUR JSON FILE NAME,
   IndoorNavigation,
 ) {
   'use strict';
