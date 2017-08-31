@@ -10,24 +10,25 @@ require([
   "./GMLDataContainer",
   "./DisplayHelper",
   "./Objects/PrimitiveOption",
-  "json!../json/sample_data_lwm_3d.json",
+  "json! YOUR JSON FILE PATH",
   "./IndoorNavigation"
 ], function(
   GMLDataContainer,
   DisplayHelper,
   PrimitiveOption,
-  sample_data_lwm_3d,
+  YOUR JSON FILE NAME,
   IndoorNavigation,
 ) {
   'use strict';
 
-  console.log(sample_data_lwm_3d);
+  console.log(YOUR JSON FILE NAME);
 
-  var gmlDataContainer = new GMLDataContainer(sample_data_lwm_3d);
+  var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME);
 
-  gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(127.1034, 37.51283, 0), 0.43); // LWM
-  // gmlDataContainer.rotateBuilding(viewer, new Cesium.Cartesian3.fromDegrees(129.082678, 35.234898, 0), -1.5708); // PNU
-
+  gmlDataContainer.rotateBuilding(
+    viewer,
+    YOUR BUILDING COORDINATE,
+    YOUR BUILDING ROTATE ANGLE);
   var displayHelper = new DisplayHelper(gmlDataContainer, viewer);
 
   displayHelper.displayBuilding(viewer,
@@ -48,7 +49,7 @@ require([
 
   var indoorNavigation = new IndoorNavigation(viewer, gmlDataContainer);
   indoorNavigation.setTreeViewNavigation();
-
+  indoorNavigation.setEntranceHref("YOUR BUILDING COORDINATE");
 
 
   // set onclick funtion for navigation

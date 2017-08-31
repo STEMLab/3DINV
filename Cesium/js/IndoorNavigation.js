@@ -74,6 +74,8 @@ define([
     this.sectionData = [];
     this.floorData = [];
 
+    this.entranceHref = null;
+
     this.setRoomData();
 
   }
@@ -120,6 +122,11 @@ define([
    */
   IndoorNavigation.prototype.setThreshold = function(threshold) {
     this.threshold = threshold;
+  }
+
+
+  IndoorNavigation.prototype.setEntranceHref = function(entranceHref){
+    this.entranceHref = entranceHref;
   }
 
 
@@ -207,6 +214,7 @@ define([
       sectionInfo.id = this.sectionData[i];
       sectionInfo.parent = "#";
       sectionInfo.text = sectionInfo.id;
+      sectionInfo.icon = "./jtree_icon/iconmonstr-building-15-16.png";
       roomArray.push(sectionInfo);
     }
 
@@ -216,6 +224,7 @@ define([
         floorInfo.id = this.sectionData[i] + this.floorData[i][j];
         floorInfo.parent = this.sectionData[i];
         floorInfo.text = "Floor : " + this.floorData[i][j];
+        floorInfo.icon = "./jtree_icon/iconmonstr-layer-22-16.png"
         roomArray.push(floorInfo);
       }
     }
@@ -225,7 +234,7 @@ define([
       roomInfo.id = key;
       roomInfo.parent = this.roomData.get(key).section + this.roomData.get(key).floor;
       roomInfo.text = key;
-      roomInfo.icon = "glyphicon glyphicon-leaf";
+      roomInfo.icon = "./jtree_icon/iconmonstr-check-mark-10-12.png";
       roomArray.push(roomInfo);
     }
 
@@ -233,10 +242,10 @@ define([
     dataInfo.data = roomArray;
 
     var themeInfo = new Object();
-    themeInfo.name = "proton";
+    themeInfo.name = 'proton';
     themeInfo.responsive = true;
 
-    var pluginInfo = ["wholerow", "sort"];
+    var pluginInfo = ["sort"];
     var sortInfo = function(a, b) {
       var a1 = this.get_node(a);
       var b1 = this.get_node(b);
@@ -268,11 +277,12 @@ define([
    * @param {Array} roomHref
    */
   IndoorNavigation.prototype.onClickTreeView = function(roomHref) {
+
     var pickedRoom = this.roomData.get(roomHref[0]);
     // var pickedRoom = this.roomInfo.get(roomHref[0]);
 
-    if (pickedRoom == null) {
-      // open lower tree
+    if (pickedRoom == undefined) {
+      return ;
     }
 
     console.log(pickedRoom);
@@ -713,6 +723,7 @@ define([
    * @param {Coordinate} newPosition
    */
   IndoorNavigation.prototype.transformCamera = function(newPosition) {
+    console.log(newPosition);
 
     var heading = this.camera.heading;
     var pitch = this.camera.pitch;
@@ -767,7 +778,15 @@ define([
    * @param {Cesium.Cesium3DTileFeature} feature Information about the items selected in the viewer.
    */
   IndoorNavigation.prototype.onClickEdge = function(feature) {
-    if (Cesium.defined(feature['id']['polyline'])) {
+
+    if (feature['id'] == undefined){
+      console.log("not edge");
+      if(this.nowMoveState.srcHref == null){
+        this.firstClickOnBuilding();
+      }
+    }
+    else if (feature['id']['polyline'] != undefined ) {
+      console.log(feature, this.nowMoveState);
 
       /** Abstract edge data from path */
       var lineName = feature['id']['name'];
@@ -785,15 +804,20 @@ define([
         lineName.substring(lineName.indexOf(",") + 1));
 
       /** coordinate data where camera exist now. */
-      var now = this.roomData.get(this.nowMoveState.srcHref).coordinate;
+      var now = new Coordinate();
+      if(this.nowMoveState.srcHref != null){
+        now = this.roomData.get(this.nowMoveState.srcHref).coordinate;
+      }
 
-      if (now.href != polylineSrc.href && now.href != polylineDst.href) {
+      if (now.href != polylineSrc.href || now.href != polylineDst.href) {
         /** if value of clicked edge not matches from nowMoveState data, set nowMoveState to edge data */
         this.setMoveStateForOnClickEdge(polylineSrc, polylineDst);
       } else if (now.href == polylineSrc.href) {
         this.nowMoveState.dstHref = polylineDst.href;
+        this.nowMoveState.srcHref = now.href;
       } else if (now.href == polylineDst.href) {
         this.nowMoveState.srcHref = polylineSrc.href;
+        this.nowMoveState.dstHref = now.href;
       }
 
       var direction = this.getDirection(
@@ -813,12 +837,27 @@ define([
           this.roomData.get(this.nowMoveState.dstHref).coordinate,
           this.nowMoveState.T);
         this.nowMoveState.T += this.moveRate;
-      } else if (direction == -1) {} else {
-        console.log("error! ");
+      } else if (direction == -1) {
+      } else {
+        console.log("error! ", direction, this.nowMoveState);
       }
     } else {
-      console.log("undefined");
+      console.log("error");
     }
+  }
+
+
+  IndoorNavigation.prototype.firstClickOnBuilding = function(){
+    console.log("firstClickOnBuilding");
+    this.disableDefaultEventHandlers();
+
+    if( this.entranceHref != null ){
+      console.log(this.roomData.get(this.entranceHref));
+      var roomHref = [];
+      roomHref[0] = this.entranceHref;
+      this.onClickTreeView(roomHref);
+    }
+
   }
 
 
