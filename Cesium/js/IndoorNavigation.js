@@ -1,6 +1,6 @@
 /**
  * This module provides functions using for navigating building that drew by {@link module: DisplayHelper}.</br>
- * You can navigate the building samply giving these functions to button as onClick action or some the other way.
+ * You can navigate the building simply giving these functions to button as onClick action or some the other way.
  * @module IndoorNavigation
  */
 define([
@@ -573,6 +573,7 @@ define([
       var tmpAngle = Cesium.Cartesian3.angleBetween(
         new Cesium.Cartesian3(dstCandidate[i].x, dstCandidate[i].y, dstCandidate[i].z),
         this.camera.direction);
+      tmpAngle = Math.abs(tmpAngle-nowAngle);
 
       dstCandidateAngle.push(tmpAngle);
     }
