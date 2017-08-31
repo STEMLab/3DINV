@@ -46,4 +46,4 @@ Input the file paths in 24 line and 26 line in `gmlToJson.js`.
 * Eun Kwon - Engineering student in Pusan National University (mount_e at naver dot com)
 
 ## License
-This project is licensed under the Apache License - see the LICENSE.md file for details
+This project is licensed under the Apache License - see the [LICENSE](https://github.com/STEMLab/3DINV/blob/master/LICENSE) file for details
