@@ -125,7 +125,7 @@ define([
   }
 
 
-  IndoorNavigation.prototype.setEntranceHref = function(entranceHref){
+  IndoorNavigation.prototype.setEntranceHref = function(entranceHref) {
     this.entranceHref = entranceHref;
   }
 
@@ -277,12 +277,15 @@ define([
    * @param {Array} roomHref
    */
   IndoorNavigation.prototype.onClickTreeView = function(roomHref) {
+    if(this.nowMoveState.srcHref == null && this.nowMoveState.dstHref == null){
+      this.disableDefaultEventHandlers();
+    }
 
     var pickedRoom = this.roomData.get(roomHref[0]);
     // var pickedRoom = this.roomInfo.get(roomHref[0]);
 
     if (pickedRoom == undefined) {
-      return ;
+      return;
     }
 
     console.log(pickedRoom);
@@ -374,7 +377,6 @@ define([
 
     var now = new Coordinate(this.camera.position.x, this.camera.position.y, this.camera.position.z);
 
-    console.log(this.nowMoveState.dstHref);
     if (this.nowMoveState.dstHref != null) {
 
       /** check second condition */
@@ -396,9 +398,10 @@ define([
           this.nowMoveState.T);
         this.nowMoveState.T += this.moveRate;
       } else if (direction == -1) {} else {
-        console.log("error! ");
+        console.log("error! ", direction, this.nowMoveState);
       }
     }
+    console.log("actionMoveFront", direction, this.nowMoveState);
   }
 
 
@@ -439,8 +442,9 @@ define([
       } else if (direction == -1) {
         /** do nothing */
       } else {
-        console.log("error! ", direction);
+        console.log("error! ", direction, this.nowMoveState);
       }
+      console.log("actionMoveBack", direction, this.nowMoveState);
     }
   }
 
@@ -583,7 +587,7 @@ define([
       var tmpAngle = Cesium.Cartesian3.angleBetween(
         new Cesium.Cartesian3(dstCandidate[i].x, dstCandidate[i].y, dstCandidate[i].z),
         this.camera.direction);
-      tmpAngle = Math.abs(tmpAngle-nowAngle);
+      tmpAngle = Math.abs(tmpAngle - nowAngle);
 
       dstCandidateAngle.push(tmpAngle);
     }
@@ -777,111 +781,142 @@ define([
    *
    * @param {Cesium.Cesium3DTileFeature} feature Information about the items selected in the viewer.
    */
-  IndoorNavigation.prototype.onClickEdge = function(feature) {
+  IndoorNavigation.prototype.onClickPolylinePath = function(feature) {
 
-    if (feature['id'] == undefined){
-      console.log("not edge");
-      if(this.nowMoveState.srcHref == null){
+    if (feature['id'] == undefined) {
+      if (this.nowMoveState.srcHref == null) {
         this.firstClickOnBuilding();
       }
-    }
-    else if (feature['id']['polyline'] != undefined ) {
-      console.log(feature, this.nowMoveState);
+    } else if (feature['id']['polyline'] != undefined) {
 
       /** Abstract edge data from path */
       var lineName = feature['id']['name'];
-
-      var polylineSrc = new Coordinate(
-        feature['id']['polyline']['positions'].getValue(0)[0].x,
-        feature['id']['polyline']['positions'].getValue(0)[0].y,
-        feature['id']['polyline']['positions'].getValue(0)[0].z,
-        lineName.substring(lineName.indexOf("#"), lineName.indexOf(",")));
-
-      var polylineDst = new Coordinate(
-        feature['id']['polyline']['positions'].getValue(0)[1].x,
-        feature['id']['polyline']['positions'].getValue(0)[1].y,
-        feature['id']['polyline']['positions'].getValue(0)[1].z,
-        lineName.substring(lineName.indexOf(",") + 1));
-
-      /** coordinate data where camera exist now. */
-      var now = new Coordinate();
-      if(this.nowMoveState.srcHref != null){
-        now = this.roomData.get(this.nowMoveState.srcHref).coordinate;
-      }
-
-      if (now.href != polylineSrc.href || now.href != polylineDst.href) {
-        /** if value of clicked edge not matches from nowMoveState data, set nowMoveState to edge data */
-        this.setMoveStateForOnClickEdge(polylineSrc, polylineDst);
-      } else if (now.href == polylineSrc.href) {
-        this.nowMoveState.dstHref = polylineDst.href;
-        this.nowMoveState.srcHref = now.href;
-      } else if (now.href == polylineDst.href) {
-        this.nowMoveState.srcHref = polylineSrc.href;
-        this.nowMoveState.dstHref = now.href;
-      }
-
-      var direction = this.getDirection(
-        this.roomData.get(this.nowMoveState.srcHref).coordinate,
-        this.roomData.get(this.nowMoveState.dstHref).coordinate,
-        this.camera.direction);
-
-      if (direction == 0 && this.nowMoveState.T != 0) { //camera see src direction
-        this.moveToSrc(
-          this.roomData.get(this.nowMoveState.srcHref).coordinate,
-          this.roomData.get(this.nowMoveState.dstHref).coordinate,
-          this.nowMoveState.T);
-        this.nowMoveState.T -= this.moveRate;
-      } else if (direction == 1 && this.nowMoveState.T != 1) { //camera see dst direction
-        this.moveToDst(
-          this.roomData.get(this.nowMoveState.srcHref).coordinate,
-          this.roomData.get(this.nowMoveState.dstHref).coordinate,
-          this.nowMoveState.T);
-        this.nowMoveState.T += this.moveRate;
-      } else if (direction == -1) {
-      } else {
-        console.log("error! ", direction, this.nowMoveState);
-      }
-    } else {
-      console.log("error");
+      this.onClickPath(lineName);
     }
   }
 
 
-  IndoorNavigation.prototype.firstClickOnBuilding = function(){
-    console.log("firstClickOnBuilding");
-    this.disableDefaultEventHandlers();
+  /**
+   *
+   * @param {Cesium.Cesium3DTileFeature} feature Information about the items selected in the viewer.
+   */
+  IndoorNavigation.prototype.onClickPolygonPath = function(feature) {
+    console.log(feature);
 
-    if( this.entranceHref != null ){
+    if (feature['id'] == undefined) {
+      if (this.nowMoveState.srcHref == null) {
+        this.firstClickOnBuilding();
+      }
+    } else {
+      var lineName = feature['id'];
+      this.onClickPath(lineName);
+    }
+  }
+
+
+  /**
+   * @param {String} lineName
+   */
+  IndoorNavigation.prototype.onClickPath = function(lineName) {
+    var pathSrcHref = lineName.substring(lineName.indexOf("#"), lineName.indexOf(","));
+    var pathDstHref = lineName.substring(lineName.indexOf(",") + 1);
+
+    var pathSrcCoor = this.roomData.get(pathSrcHref).coordinate;
+    var pathDstCoor = this.roomData.get(pathDstHref).coordinate;
+
+    /** coordinate data where camera exist now. */
+    var now = new Coordinate();
+    if (this.nowMoveState.srcHref != null) {
+      now = this.roomData.get(this.nowMoveState.srcHref).coordinate;
+    }
+
+    if (now.href != pathSrcCoor.href || now.href != pathDstCoor.href) {
+      /** if value of clicked edge not matches from nowMoveState data, set nowMoveState to edge data */
+      this.setMoveStateForOnClickEdge(pathSrcCoor, pathDstCoor);
+    } else if (now.href == pathSrcCoor.href) {
+      this.nowMoveState.dstHref = pathDstCoor.href;
+      this.nowMoveState.srcHref = now.href;
+    } else if (now.href == pathDstCoor.href) {
+      this.nowMoveState.srcHref = pathSrcCoor.href;
+      this.nowMoveState.dstHref = now.href;
+    }
+
+    var direction = this.getDirection(
+      this.roomData.get(this.nowMoveState.srcHref).coordinate,
+      this.roomData.get(this.nowMoveState.dstHref).coordinate,
+      this.camera.direction);
+
+    if (direction == 0 && this.nowMoveState.T != 0) { //camera see src direction
+      this.moveToSrc(
+        this.roomData.get(this.nowMoveState.srcHref).coordinate,
+        this.roomData.get(this.nowMoveState.dstHref).coordinate,
+        this.nowMoveState.T);
+      this.nowMoveState.T -= this.moveRate;
+    } else if (direction == 1 && this.nowMoveState.T != 1) { //camera see dst direction
+      this.moveToDst(
+        this.roomData.get(this.nowMoveState.srcHref).coordinate,
+        this.roomData.get(this.nowMoveState.dstHref).coordinate,
+        this.nowMoveState.T);
+      this.nowMoveState.T += this.moveRate;
+    } else if (direction == -1) {} else {
+      console.log("error! ", direction, this.nowMoveState);
+    }
+  }
+
+
+
+  IndoorNavigation.prototype.firstClickOnBuilding = function() {
+    if (this.entranceHref != null) {
       console.log(this.roomData.get(this.entranceHref));
       var roomHref = [];
       roomHref[0] = this.entranceHref;
       this.onClickTreeView(roomHref);
     }
-
   }
 
 
   /**
    */
-  IndoorNavigation.prototype.setMoveStateForOnClickEdge = function(polylineSrc, polylineDst) {
+  IndoorNavigation.prototype.setMoveStateForOnClickEdge = function(src, dst) {
 
-    var nowToSrcLen = Cesium.Cartesian3.distance(new Cesium.Cartesian3(polylineSrc.x, polylineSrc.y, polylineSrc.z), this.camera.position);
-    var nowToDstLen = Cesium.Cartesian3.distance(new Cesium.Cartesian3(polylineDst.x, polylineDst.y, polylineDst.z), this.camera.position);
+    var nowToSrcLen = Cesium.Cartesian3.distance(new Cesium.Cartesian3(src.x, src.y, src.z), this.camera.position);
+    var nowToDstLen = Cesium.Cartesian3.distance(new Cesium.Cartesian3(dst.x, dst.y, dst.z), this.camera.position);
 
     if (nowToSrcLen > nowToDstLen) {
-      this.transformCamera(polylineDst);
-      this.nowMoveState.srcHref = polylineDst.href;
-      this.nowMoveState.dstHref = polylineSrc.href;
+      this.transformCamera(dst);
+      this.nowMoveState.srcHref = dst.href;
+      this.nowMoveState.dstHref = src.href;
       this.nowMoveState.T = 0;
     } else {
-      this.transformCamera(polylineSrc);
-      this.nowMoveState.srcHref = polylineSrc.href;
-      this.nowMoveState.dstHref = polylineDst.href;
+      this.transformCamera(src);
+      this.nowMoveState.srcHref = src.href;
+      this.nowMoveState.dstHref = dst.href;
       this.nowMoveState.T = 0;
     }
-
-    console.log("setMoveStateForOnClickEdge", this.nowMoveState);
   };
+
+
+  /**
+   * @param {Cesium.Cartesian3} buildingCoor
+   * @param {Number} xfactor
+   * @param {Number} yfactor
+   * @param {Number} zfactor
+   * @param {Number} heading
+   */
+  IndoorNavigation.prototype.flyToBuilding = function(buildingCoor, heading, pitch, roll){
+    this.camera.flyTo({
+      destination: new Cesium.Cartesian3(
+        buildingCoor.x,
+        buildingCoor.y,
+        buildingCoor.z
+      ),
+      orientation: {
+        heading: heading,
+        pitch: pitch,
+        roll: roll
+      }
+    });
+  }
 
 
 

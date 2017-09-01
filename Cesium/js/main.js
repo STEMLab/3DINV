@@ -26,20 +26,20 @@ require([
   var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME);
 
   gmlDataContainer.rotateBuilding(
-    viewer,
-    YOUR BUILDING COORDINATE,
-    YOUR BUILDING ROTATE ANGLE);
+   viewer,
+   YOUR BUILDING COORDINATE,
+   YOUR BUILDING ROTATE ANGLE);
+
   var displayHelper = new DisplayHelper(gmlDataContainer, viewer);
 
   displayHelper.displayBuilding(viewer,
-    new PrimitiveOption("Image", false, "./Texture/dark_blue.png", null),
-    new PrimitiveOption("Image", false, "./Texture/light_gray.png", null),
-    new PrimitiveOption("Image", false, "./Texture/dark_gray.png", null),
-    new PrimitiveOption("Image", false, "./Texture/light_gray.png", null));
+    new PrimitiveOption("Image", false, "./Texture/reddish.png", null),
+    new PrimitiveOption("Image", false, "./Texture/white_wall.png", null),
+    new PrimitiveOption("Image", false, "./Texture/gray_floor.png", null),
+    new PrimitiveOption("Image", false, "./Texture/white_wall.png", null));
 
-  displayHelper.displayPath(viewer);
-
-  viewer.flyTo(viewer.entities);
+  displayHelper.displayPathAsPolygon(viewer);
+  // displayHelper.displayPathAsPolyline(viewer);
 
   var canvas = viewer.canvas;
   canvas.setAttribute('tabindex', '0'); // needed to put focus on the canvas
@@ -49,8 +49,8 @@ require([
 
   var indoorNavigation = new IndoorNavigation(viewer, gmlDataContainer);
   indoorNavigation.setTreeViewNavigation();
-  indoorNavigation.setEntranceHref("YOUR BUILDING COORDINATE");
-
+  indoorNavigation.setEntranceHref("YOUR BUILDING ENTRANCE HREF");
+  indoorNavigation.flyToBuilding(COORDINATE YOU WANT TO GO, HEADING, PITCH, ROLL);
 
   // set onclick funtion for navigation
   $('#jstree').on("changed.jstree", function(e, data) {
@@ -62,7 +62,8 @@ require([
   handler.setInputAction(function(movement) {
     var feature = viewer.scene.pick(movement.position);
     if (Cesium.defined(feature)) {
-      indoorNavigation.onClickEdge(feature);
+      indoorNavigation.onClickPolygonPath(feature);
+      // indoorNavigation.onClickPolylinePath(feature);
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 

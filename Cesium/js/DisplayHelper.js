@@ -80,6 +80,7 @@ define([
           }),
         });
 
+
         /** checking for ceiling */
         var temp = Cesium.Cartesian3.unpackArray(this.gmlDataContainer.cellSpaceMembers[i].surfaceMember[j].coordinates);
         var pre = Math.floor(Cesium.Cartographic.fromCartesian(temp[0]).height);
@@ -260,11 +261,16 @@ define([
 
 
 
+
+
   /**
    * Display paths using edges value of {@link module:DisplayHelper.gmlDataContainer}.
+   * With this function, path will draw by polyline.
+   * And if you using this for drawing path, you should using `onClickPolylinePath` for onClick function.
    * @param {Cesium.Viewer} viewer
    */
-  DisplayHelper.prototype.displayPath = function(viewer) {
+  DisplayHelper.prototype.displayPathAsPolyline = function(viewer) {
+    var pathInstance = [];
 
     /** Displaying the edges. */
     for (var i = 0; i < this.gmlDataContainer.edges.length; i++) {
@@ -284,7 +290,7 @@ define([
           ],
           followSurface: new Cesium.ConstantProperty(true),
           width: 50,
-          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8.0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 10.0),
           material: Cesium.Color.WHITE.withAlpha(0.8),
           outline: true,
           /** height or extrudedHeight must be set for outlines to display */
@@ -294,6 +300,69 @@ define([
     }
   }
 
+
+  /**
+   * Display paths using edges value of {@link module:DisplayHelper.gmlDataContainer}.
+   * With this function, path will draw by PolygonGeometry.
+   * And if you using this for drawing path, you should using `onClickPolygonPath` for onClick function.
+   * @param {Cesium.Viewer} viewer
+   */
+  DisplayHelper.prototype.displayPathAsPolygon = function(viewer) {
+    var pathInstance = [];
+
+    /** Displaying the edges. */
+    for (var i = 0; i < this.gmlDataContainer.edges.length; i++) {
+      var leftUp = new Cesium.Cartesian3(
+        this.gmlDataContainer.edges[i].stateMembers[0].coordinates[0] - 0.12,
+        this.gmlDataContainer.edges[i].stateMembers[0].coordinates[1],
+        this.gmlDataContainer.edges[i].stateMembers[0].coordinates[2] + 0.2);
+
+      var rightUp = new Cesium.Cartesian3(
+        this.gmlDataContainer.edges[i].stateMembers[0].coordinates[0] + 0.12,
+        this.gmlDataContainer.edges[i].stateMembers[0].coordinates[1],
+        this.gmlDataContainer.edges[i].stateMembers[0].coordinates[2] + 0.2);
+
+      var leftDown = new Cesium.Cartesian3(
+        this.gmlDataContainer.edges[i].stateMembers[1].coordinates[0] - 0.12,
+        this.gmlDataContainer.edges[i].stateMembers[1].coordinates[1],
+        this.gmlDataContainer.edges[i].stateMembers[1].coordinates[2] + 0.2);
+
+      var rightDown = new Cesium.Cartesian3(
+        this.gmlDataContainer.edges[i].stateMembers[1].coordinates[0] + 0.12,
+        this.gmlDataContainer.edges[i].stateMembers[1].coordinates[1],
+        this.gmlDataContainer.edges[i].stateMembers[1].coordinates[2] + 0.2);
+
+      var position = [leftUp, rightUp, rightDown, leftDown];
+
+      var geometryInstance = new Cesium.GeometryInstance({
+        geometry: new Cesium.PolygonGeometry({
+          polygonHierarchy: new Cesium.PolygonHierarchy(position),
+          perPositionHeight: true
+        }),
+        id: 'line ' + this.gmlDataContainer.edges[i].connects,
+      });
+      pathInstance.push(geometryInstance);
+    }
+
+    var pathOption = new PrimitiveOption("Image", false, "./Texture/darkdark_gray.png", null);
+
+    var pathPrimitive = new Cesium.Primitive({
+      geometryInstances: pathInstance,
+      appearance: new Cesium.PerInstanceColorAppearance({
+        faceForward: true,
+        flat: true,
+        translucent: false,
+        closed: false
+      })
+    });
+
+    pathPrimitive.appearance = new Cesium.MaterialAppearance();
+    pathPrimitive.appearance.material = pathOption.getMaterial();
+    viewer.scene.primitives.add(pathPrimitive);
+  }
+
+
+
   DisplayHelper.prototype.importGLBFile = function(viewer, position, uri) {
     viewer.entities.add({
       position: position,
@@ -302,6 +371,7 @@ define([
       }
     });
   }
+
 
 
 

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Main Page</title>
+  <title>Demo</title>
   <script src="../Build/Cesium/Cesium.js"></script>
   <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css">
@@ -22,21 +22,22 @@
 
     .treeContainer {
       border-style: hidden;
-      background-color: rgba( 255, 255, 255, 0.9);
+      background-color: rgba(0, 0, 0, 0.6);
       border-radius: 5px;
+      color : rgba(255, 255, 255,1);
       position: absolute;
       left: 20px;
       top: 20px;
       display: block;
       padding: 15px;
       overflow: auto;
-      height: 30%;
-      width: auto%;
+      height: 25%;
+      width: 30%;
     }
 
     .controller {
       border-style: hidden;
-      background-color: rgba( 0, 0, 0, 0);
+      background-color: rgba(0, 0, 0, 0);
       position: absolute;
       right: 20px;
       bottom: 20px;
@@ -82,7 +83,6 @@
   <script>
     function setTreeView(data) {
       $(function() {
-        // create an instance when the DOM is ready
         $('#jstree').jstree(data);
       });
     }
