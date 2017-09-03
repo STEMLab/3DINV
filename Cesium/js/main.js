@@ -21,8 +21,6 @@ require([
 ) {
   'use strict';
 
-  console.log(YOUR JSON FILE NAME);
-
   var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME);
 
   gmlDataContainer.rotateBuilding(
@@ -48,6 +46,7 @@ require([
   };
 
   var indoorNavigation = new IndoorNavigation(viewer, gmlDataContainer);
+  indoorNavigation.setMoveRate(0.25);
   indoorNavigation.setTreeViewNavigation();
   indoorNavigation.setEntranceHref("YOUR BUILDING ENTRANCE HREF");
   indoorNavigation.flyToBuilding(COORDINATE YOU WANT TO GO, HEADING, PITCH, ROLL);
