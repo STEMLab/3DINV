@@ -74,6 +74,10 @@ define([
     this.sectionData = [];
     this.floorData = [];
 
+    /**
+     * Href data of entrance of building.
+     * @default null
+     */
     this.entranceHref = null;
 
     this.setRoomData();
@@ -96,7 +100,7 @@ define([
    * Set {@link module:IndoorNavigation.moveRate} value.
    * @param {Number} moveRate This angle, in radian, to rotate.
    */
-  IndoorNavigation.prototype.setTurnRate = function(moveRate) {
+  IndoorNavigation.prototype.setMoveRate = function(moveRate) {
     if (1 % moveRate == 0) {
       this.moveRate = moveRate;
     } else {
@@ -124,7 +128,10 @@ define([
     this.threshold = threshold;
   }
 
-
+  /**
+   * Set {@link module:IndoorNavigation.entranceHref} value.
+   * @param {Number} threshold
+   */
   IndoorNavigation.prototype.setEntranceHref = function(entranceHref) {
     this.entranceHref = entranceHref;
   }
@@ -277,7 +284,7 @@ define([
    * @param {Array} roomHref
    */
   IndoorNavigation.prototype.onClickTreeView = function(roomHref) {
-    if(this.nowMoveState.srcHref == null && this.nowMoveState.dstHref == null){
+    if (this.nowMoveState.srcHref == null && this.nowMoveState.dstHref == null) {
       this.disableDefaultEventHandlers();
     }
 
@@ -563,12 +570,16 @@ define([
    *  <tr>
    *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode1.png" height="250px"></td>
    *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode2.png" height="250px"></td>
-   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode3.png" height="250px"></td>
-   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode4.png" height="100px"></td>
    *  </tr>
    *  <tr>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.1 src node and nodes associated with it.</p></td>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.2 angle between position of camera and direction of camera</p></td>
+   *  </tr>
+   *  <tr>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode3.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getMostSimilarNode4.png" height="200px"></td>
+   *  </tr>
+   *  <tr>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.3 angles between the position of destination candidate and direction of the camera.</p></td>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.4 Select one that most closely matches θ_{0}</p></td>
    *  </tr>
@@ -619,20 +630,24 @@ define([
    * When the angle between src and dir is referred to as srcAngle
    * and the angle between dst and dir is referred to dstAngle,
    * the direction is defined in the three cases below:
-   * 1. direction = src : `srcAngle < dstAngle` and `dstAngle < threshold`
-   * 2. direction = dst : `srcAngle > dstAngle` and `srcAngle < threshold`
+   * 1. direction = src : `srcAngle < dstAngle` and `srcAngle < threshold`
+   * 2. direction = dst : `srcAngle > dstAngle` and `dstAngle < threshold`
    * 3. no direction : Failure to satisfy 1 and 2</br>
    *
    * <table style="width:200px;">
    *  <tr>
    *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection4.png" height="250px"></td>
    *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection2.png" height="250px"></td>
-   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection1.png" height="250px"></td>
-   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection3.png" height="250px"></td>
    *  </tr>
    *  <tr>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.4 the situation</p></td>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.5 direction = src</p></td>
+   *  </tr>
+   *  <tr>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection1.png" height="250px"></td>
+   *    <td style="vertical-align: bottom; padding:0px 15px"><img src="./img/img_getDirection3.png" height="250px"></td>
+   *  </tr>
+   *  <tr>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.6 direction = dst</p></td>
    *    <td style="vertical-align: top; padding:0px 15px"><p style="font-size: 12px;">Fig.7 no direction</p></td>
    *  </tr>
@@ -778,8 +793,18 @@ define([
 
 
   /**
-   *
+   * This is a function that should be executed when clicking the edge(path) visualized with Polyline.</br>
+   * This reads the `id` from the clicked object and parses the `linename` consisting of the href values ​​at both ends of the edge
+   * and passes it to {@link module:IndoorNavigation.onClickPath}.
    * @param {Cesium.Cesium3DTileFeature} feature Information about the items selected in the viewer.
+   * @example
+   * var handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+   * handler.setInputAction(function(movement) {
+   *  var feature = viewer.scene.pick(movement.position);
+   *  if (Cesium.defined(feature)) {
+   *    indoorNavigation.onClickPolylinePath(feature);
+   *  }
+   * }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
    */
   IndoorNavigation.prototype.onClickPolylinePath = function(feature) {
 
@@ -797,8 +822,18 @@ define([
 
 
   /**
-   *
+   * This is a function that should be executed when clicking the edge(path) visualized with Polygon.</br>
+   * This reads the `id` from the clicked object and parses the `linename` consisting of the href values ​​at both ends of the edge
+   * and passes it to {@link module:IndoorNavigation.onClickPath}.
    * @param {Cesium.Cesium3DTileFeature} feature Information about the items selected in the viewer.
+   * @example
+   * var handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+   * handler.setInputAction(function(movement) {
+   *  var feature = viewer.scene.pick(movement.position);
+   *  if (Cesium.defined(feature)) {
+   *    indoorNavigation.onClickPolygonPath(feature);
+   *  }
+   * }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
    */
   IndoorNavigation.prototype.onClickPolygonPath = function(feature) {
     console.log(feature);
@@ -815,9 +850,18 @@ define([
 
 
   /**
-   * @param {String} lineName
+   * This function works in the following order.</br>
+   * 1. Parse src and dst href data from lineName
+   * 2. Check whether there is a part where nowMoveState overlaps with href data parsed in 1.</br>
+   *    A. If there is no overlap, set {@link module:IndoorNavigation.nowMoveState} to path data.</br>
+   *    B. If the camera is on src of edge, assign {@link module:IndoorNavigation.nowMoveState}.dstHref to dst of edge.</br>
+   *    C. If the camera is on dst of edge, assign {@link module:IndoorNavigation.nowMoveState}.srcHref to src of edge.
+   * 3. Get direction to move and move the camera. This working like {@link module:IndoorNavigation.actionMoveFront}.
+   * @param {String} lineName consisting of the href values ​​at both ends of clicked edge.
    */
   IndoorNavigation.prototype.onClickPath = function(lineName) {
+
+    /** parse href data from lineName */
     var pathSrcHref = lineName.substring(lineName.indexOf("#"), lineName.indexOf(","));
     var pathDstHref = lineName.substring(lineName.indexOf(",") + 1);
 
@@ -831,7 +875,7 @@ define([
     }
 
     if (now.href != pathSrcCoor.href || now.href != pathDstCoor.href) {
-      /** if value of clicked edge not matches from nowMoveState data, set nowMoveState to edge data */
+      /** if value of clicked edge not matches from nowMoveState data, set nowMoveState to path data */
       this.setMoveStateForOnClickEdge(pathSrcCoor, pathDstCoor);
     } else if (now.href == pathSrcCoor.href) {
       this.nowMoveState.dstHref = pathDstCoor.href;
@@ -846,25 +890,34 @@ define([
       this.roomData.get(this.nowMoveState.dstHref).coordinate,
       this.camera.direction);
 
-    if (direction == 0 && this.nowMoveState.T != 0) { //camera see src direction
+    if (direction == 0 && this.nowMoveState.T != 0) { /** camera see src direction */
       this.moveToSrc(
         this.roomData.get(this.nowMoveState.srcHref).coordinate,
         this.roomData.get(this.nowMoveState.dstHref).coordinate,
         this.nowMoveState.T);
       this.nowMoveState.T -= this.moveRate;
-    } else if (direction == 1 && this.nowMoveState.T != 1) { //camera see dst direction
+    } else if (direction == 1 && this.nowMoveState.T != 1) { /** camera see dst direction */
       this.moveToDst(
         this.roomData.get(this.nowMoveState.srcHref).coordinate,
         this.roomData.get(this.nowMoveState.dstHref).coordinate,
         this.nowMoveState.T);
       this.nowMoveState.T += this.moveRate;
-    } else if (direction == -1) {} else {
+    } else if (direction == -1) {
+      /** over threshold, not move */
+    } else {
       console.log("error! ", direction, this.nowMoveState);
     }
   }
 
 
-
+  /**
+   * Until you click on the building, you can freely explore the exterior of the building through the action of the mouse.</br>
+   * This function is called when the building is first clicked</br>
+   * This makes to move the camera to a space known as the building's entrance({@link module:IndoorNavigation.entranceHref}),
+   * and disables the default events provide by cesium.</br>
+   * After this function, you can visit the room through the functions that are defined in the {@link module:IndoorNavigation}.
+   * {@link module:IndoorNavigation.setEntranceHref} must be called for this to work properly.
+   */
   IndoorNavigation.prototype.firstClickOnBuilding = function() {
     if (this.entranceHref != null) {
       console.log(this.roomData.get(this.entranceHref));
@@ -876,6 +929,9 @@ define([
 
 
   /**
+   * If edge is clicked, the coordinates of both ends of edge are read,
+   * and the side closer to the current coordinate is assigned to {@link module:IndoorNavigation.nowMoveState.srcHref}
+   * and the far side is assigned to {@link module:IndoorNavigation.nowMoveState.dstHref}.
    */
   IndoorNavigation.prototype.setMoveStateForOnClickEdge = function(src, dst) {
 
@@ -903,7 +959,7 @@ define([
    * @param {Number} zfactor
    * @param {Number} heading
    */
-  IndoorNavigation.prototype.flyToBuilding = function(buildingCoor, heading, pitch, roll){
+  IndoorNavigation.prototype.flyToBuilding = function(buildingCoor, heading, pitch, roll) {
     this.camera.flyTo({
       destination: new Cesium.Cartesian3(
         buildingCoor.x,

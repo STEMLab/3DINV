@@ -1,7 +1,7 @@
 # JavaScript files for Indoor Viewer in Cesium
 
 This briefly describe the main functions to make it easier for you to use.</br>
-A detailed description of each module can be found in the library of [the demo site](https://tntweb.herokuapp.com/) or [our git hub lib page](https://github.com/STEMLab/3DINV).
+A detailed description of each module can be found in the library of [the demo site](https://tntweb.herokuapp.com/) or comments on source code.
 
 ## Objects
 Newly defined objects for development usability of project.
@@ -81,10 +81,11 @@ The building that drawing by this module will be consist of simple polygon and y
 |:-------------------------|:-------------------------------|
 | new DisplayHelper | Create new DisplayHelper object.</br> When this function is called , the constructor make geometry instances from cellspaceMember of GMLDataContainer and stores it in the module object. |
 | displayBuilding | Display building on Cesuim viewer.</br> You can add color or texture for each instances using parameter. And these options are defined in Objects.PrimitiveOption. |
-| displayPath | Display paths on viewer using edges value of GMLDataContainer. |
+| displayPathAsPolyline | Display paths on viewer using edges value of GMLDataContainer.</br>With this function, path will draw by polyline. |
+| displayPathAsPolygon | Display paths on viewer using edges value of GMLDataContainer.</br>With this function, path will draw by polygon. This will supply more clear line for path than `displayPathAsPolyline`. |
 
 ### IndoorNavigation
-This module provides functions using for navigating building that drew by DisplayHelper.</br>
+This module provides functions using for navigating building that drew by DisplayHelper.
 You can navigate the building simply giving these functions to button as onClick action or some the other way.
 
 | function name | description |

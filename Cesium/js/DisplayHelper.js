@@ -264,9 +264,9 @@ define([
 
 
   /**
-   * Display paths using edges value of {@link module:DisplayHelper.gmlDataContainer}.
-   * With this function, path will draw by polyline.
-   * And if you using this for drawing path, you should using `onClickPolylinePath` for onClick function.
+   * Display paths using edges value of {@link module:DisplayHelper.gmlDataContainer}.</br>
+   * With this function, path will draw by polyline.</br>
+   * And if you using this for drawing path, you should using {@link module:IndoorNavigation.onClickPolylinePath} for onClick function.</br>
    * @param {Cesium.Viewer} viewer
    */
   DisplayHelper.prototype.displayPathAsPolyline = function(viewer) {
@@ -302,10 +302,18 @@ define([
 
 
   /**
-   * Display paths using edges value of {@link module:DisplayHelper.gmlDataContainer}.
-   * With this function, path will draw by PolygonGeometry.
-   * And if you using this for drawing path, you should using `onClickPolygonPath` for onClick function.
+   * Display paths using edges value of {@link module:DisplayHelper.gmlDataContainer}.</br>
+   * With this function, path will draw by PolygonGeometry.</br>
+   * And if you using this for drawing path, you should using {@link module:IndoorNavigation.onClickPolygonPath} for onClick function.</br>
    * @param {Cesium.Viewer} viewer
+   * @example
+   * var handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+   * handler.setInputAction(function(movement) {
+   *  var feature = viewer.scene.pick(movement.position);
+   *  if (Cesium.defined(feature)) {
+   *    indoorNavigation.onClickPolygonPath(feature);
+   *  }
+   * }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
    */
   DisplayHelper.prototype.displayPathAsPolygon = function(viewer) {
     var pathInstance = [];
