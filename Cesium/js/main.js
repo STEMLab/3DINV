@@ -10,18 +10,22 @@ require([
   "./GMLDataContainer",
   "./DisplayHelper",
   "./Objects/PrimitiveOption",
-  "json! YOUR JSON FILE PATH",
-  "./IndoorNavigation"
+  "./IndoorNavigationData",
+  "./IndoorNavigationAction",
+  "json!YOUR JSON FILE PATH"
 ], function(
   GMLDataContainer,
   DisplayHelper,
   PrimitiveOption,
-  YOUR JSON FILE NAME,
-  IndoorNavigation,
+  IndoorNavigationData,
+  IndoorNavigationAction,
+  YOUR JSON FILE NAME
 ) {
   'use strict';
 
-  var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME);
+  console.log(YOUR JSON FILE NAME,);
+
+  var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME,);
 
   gmlDataContainer.rotateBuilding(
    viewer,
@@ -37,7 +41,6 @@ require([
     new PrimitiveOption("Image", false, "./Texture/white_wall.png", null));
 
   displayHelper.displayPathAsPolygon(viewer);
-  // displayHelper.displayPathAsPolyline(viewer);
 
   var canvas = viewer.canvas;
   canvas.setAttribute('tabindex', '0'); // needed to put focus on the canvas
@@ -45,15 +48,15 @@ require([
     canvas.focus();
   };
 
-  var indoorNavigation = new IndoorNavigation(viewer, gmlDataContainer);
-  indoorNavigation.setMoveRate(0.25);
-  indoorNavigation.setTreeViewNavigation();
-  indoorNavigation.setEntranceHref("YOUR BUILDING ENTRANCE HREF");
-  indoorNavigation.flyToBuilding(COORDINATE YOU WANT TO GO, HEADING, PITCH, ROLL);
+  var indoorNavigationData = new IndoorNavigationData(gmlDataContainer);
+  var indoorNavigationAction = new IndoorNavigationAction(viewer, indoorNavigationData);
+  indoorNavigationData.setEntranceHref("YOUR BUILDING ENTRANCE HREF");
+  indoorNavigationAction.setTreeViewNavigation();
+  indoorNavigationAction.flyToBuilding(new Cesium.Cartesian3(COORDINATE YOU WANT TO GO, HEADING, PITCH, ROLL);
 
   // set onclick funtion for navigation
   $('#jstree').on("changed.jstree", function(e, data) {
-    indoorNavigation.onClickTreeView(data.selected);
+    indoorNavigationAction.onClickTreeView(data.selected);
   });
 
 
@@ -61,8 +64,8 @@ require([
   handler.setInputAction(function(movement) {
     var feature = viewer.scene.pick(movement.position);
     if (Cesium.defined(feature)) {
-      indoorNavigation.onClickPolygonPath(feature);
-      // indoorNavigation.onClickPolylinePath(feature);
+      indoorNavigationAction.onClickPolygonPath(feature);
+      // indoorNavigationAction.onClickPolylinePath(feature);
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -77,25 +80,25 @@ require([
 
     if( 66 <= offsetX && offsetX <= 81 && 37 <= offsetY && offsetY <= 56 ){
       console.log("onclick moveFront");
-      indoorNavigation.actionMoveFront();
+      indoorNavigationAction.actionMoveFront();
     } else if( 66 <= offsetX && offsetX <= 81 && 91 <= offsetY && offsetY <= 111 ){
       console.log("onclick moveBack");
-      indoorNavigation.actionMoveFront();
+      indoorNavigationAction.actionMoveBack();
     } else if( 37 <= offsetX && offsetX <= 57 && 65 <= offsetY && offsetY <= 80 ){
       console.log("onclick TurnLeft");
-      indoorNavigation.actionTurnLeft();
+      indoorNavigationAction.actionTurnLeft();
     } else if( 92 <= offsetX && offsetX <= 111 && 65 <= offsetY && offsetY <= 80 ){
       console.log("onclick TurnRight");
-      indoorNavigation.actionTurnRight();
+      indoorNavigationAction.actionTurnRight();
     } else if( 225 <= offsetX && offsetX <= 255 && 36 <= offsetY && offsetY <= 64 ){
       console.log("onclick TurnStraight");
-      indoorNavigation.actionTurnStraight();
+      indoorNavigationAction.actionTurnStraight();
     } else if( 204 <= offsetX && offsetX <= 234 && 74 <= offsetY && offsetY <= 104 ){
       console.log("onclick ZoomIn");
-      indoorNavigation.actionZoomIn();
+      indoorNavigationAction.actionZoomIn();
     } else if( 249 <= offsetX && offsetX <= 279 && 77 <= offsetY && offsetY <= 107 ){
       console.log("onclick ZoomOut");
-      indoorNavigation.actionZoomOut();
+      indoorNavigationAction.actionZoomOut();
     }
   }
 
