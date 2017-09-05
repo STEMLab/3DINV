@@ -46,6 +46,7 @@ define([
    */
   IndoorNavigationAction.prototype.setTreeViewNavigation = function() {
     var data = this.makeRoomDataToJson();
+    console.log(data);
     setTreeView(data); // this function must in html
   }
 
@@ -246,8 +247,10 @@ define([
           this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
           this.indoorNavigationData.nowMoveState.T);
         this.indoorNavigationData.nowMoveState.T += this.indoorNavigationData.moveRate;
-      } else if (direction == -1) {} else {
-        console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+      } else if (direction == -1) {
+        /** over threshold, not move */
+      } else {
+         console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
       }
     }
     console.log("actionMoveFront", direction, this.indoorNavigationData.nowMoveState);
@@ -268,31 +271,32 @@ define([
     /** check first condition*/
     this.checkAndAssignDst4MoveBack(oppsiteDirection);
 
-    var now = new Coordinate(this.camera.position.x, this.camera.position.y, this.camera.position.z);
-
     if (this.indoorNavigationData.nowMoveState.dstHref != null) {
 
       /** check second condition */
       var direction = this.getDirection(
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
-        oppsiteDirection);
-      console.log(direction);
+        this.camera.direction);
 
-      if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 0) { //camera see src direction
-        this.moveToSrc(
-          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
-          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
-          this.indoorNavigationData.nowMoveState.T);
-        this.indoorNavigationData.nowMoveState.T -= this.indoorNavigationData.moveRate;
-      } else if (direction == 1 && this.indoorNavigationData.nowMoveState.T != 1) { //camera see dst direction
+      if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 1) {
+        /** camera see src direction */
         this.moveToDst(
           this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
           this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
           this.indoorNavigationData.nowMoveState.T);
         this.indoorNavigationData.nowMoveState.T += this.indoorNavigationData.moveRate;
-      } else if (direction == -1) {} else {
-        console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+      } else if (direction == 1 && this.indoorNavigationData.nowMoveState.T != 0) {
+        /** camera see dst direction */
+        this.moveToSrc(
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
+          this.indoorNavigationData.nowMoveState.T);
+        this.indoorNavigationData.nowMoveState.T -= this.indoorNavigationData.moveRate;
+      } else if (direction == -1) {
+        /** over threshold, not move */
+      } else {
+         console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
       }
       console.log("actionMoveBack", direction, this.indoorNavigationData.nowMoveState);
     }
@@ -320,6 +324,48 @@ define([
       else this.indoorNavigationData.nowMoveState.dstHref = null;
       this.indoorNavigationData.nowMoveState.T = 0;
       console.log("checkAndAssignDstforMoveFront", newDst);
+    }
+  }
+
+
+
+  /**
+   * Check the condition 1 : nowMoveState should have proper source and destination.</br>
+   * This function check that the camera is whether on traveling one edge or not.</br>
+   * If the camera is not in the middle of the edge, which means the camera is on some node, assign the node that camera located at the source of nowMoveState and search new destination using `getNewDst`.
+   */
+  IndoorNavigationAction.prototype.checkAndAssignDst4MoveBack = function(od) {
+
+    if (this.indoorNavigationData.nowMoveState.T == 0) {
+
+      /** camera is on src node, find new dst */
+      var newDst = this.getNewDst(od);
+
+      if (newDst != null) {
+        this.indoorNavigationData.nowMoveState.dstHref = this.indoorNavigationData.nowMoveState.srcHref;
+        this.indoorNavigationData.nowMoveState.srcHref = newDst.href;
+        this.indoorNavigationData.nowMoveState.T = 1;
+      } else {
+        this.indoorNavigationData.nowMoveState.dstHref = null;
+      }
+
+      console.log("checkAndAssignDst4MoveBack", newDst);
+
+    } else if (this.indoorNavigationData.nowMoveState.T == 1) {
+      this.indoorNavigationData.nowMoveState.srcHref = this.indoorNavigationData.nowMoveState.dstHref;
+
+      /** camera is on dst node, find new dst */
+      var newDst = this.getNewDst(od);
+
+      if (newDst != null) {
+        this.indoorNavigationData.nowMoveState.srcHref = newDst.href;
+      } else {
+        this.indoorNavigationData.nowMoveState.srcHref = this.indoorNavigationData.nowMoveState.dstHref;
+        this.indoorNavigationData.nowMoveState.dstHref = null;
+        this.indoorNavigationData.nowMoveState.T = 0;
+      }
+
+      console.log("checkAndAssignDst4MoveBack", newDst);
     }
   }
 
@@ -430,16 +476,19 @@ define([
     var dstCandidateAngle = new Array();
 
     /** Calculate the angle between the position of the camera and direction where camera stare of the camera. */
-    var nowAngle = Cesium.Cartesian3.angleBetween(this.camera.position, direction);
+    var nowAngle = Cesium.Cartesian3.angleBetween(this.camera.position, new Cesium.Cartesian3(direction.x, direction.y, direction.z));
 
     /** Calculate the angles between the position of destination candidate and direction where camera stare of the camera. */
     for (var i = 0; i < dstCandidate.length; i++) {
       var tmpAngle = Cesium.Cartesian3.angleBetween(
-        new Cesium.Cartesian3(dstCandidate[i].x, dstCandidate[i].y, dstCandidate[i].z),
-        direction);
-      tmpAngle = Math.abs(tmpAngle - nowAngle);
+        direction,
+        new Cesium.Cartesian3(dstCandidate[i].x, dstCandidate[i].y, dstCandidate[i].z));
 
-      dstCandidateAngle.push(tmpAngle);
+      var diff;
+      if(tmpAngle > nowAngle) diff = nowAngle - tmpAngle;
+      else                    diff = tmpAngle - nowAngle;
+
+      dstCandidateAngle.push(diff);
     }
 
     /** Select one of the values found in 2 that most closely matches the angle found in 1. And return its Coordinate. */
@@ -501,16 +550,15 @@ define([
     var srcAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(src.x, src.y, src.z), dir);
     var dstAngle = Cesium.Cartesian3.angleBetween(new Cesium.Cartesian3(dst.x, dst.y, dst.z), dir);
 
-    // console.log("srcAngle:", srcAngle, "dstAngle:", dstAngle);
+
 
     var direction;
 
-    var diff = srcAngle - dstAngle;
+    if      (srcAngle < dstAngle && srcAngle < this.indoorNavigationData.threshold) direction = 0;
+    else if (dstAngle < srcAngle && dstAngle < this.indoorNavigationData.threshold) direction = 1;
+    else    direction = -1;
 
-    if (diff < 0 && srcAngle < this.indoorNavigationData.threshold) direction = 0;
-    else if (diff > 0 && dstAngle > this.indoorNavigationData.threshold) direction = 1;
-    else direction = -1;
-
+    console.log("getDirection : ", direction, " srcAngle:", srcAngle, " dstAngle:", dstAngle);
     return direction;
   }
 
@@ -730,7 +778,24 @@ define([
       this.camera.direction);
 
     if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 0) { /** camera see src direction */
-      this.moveToSrc(
+      if (type == 0 || type == 2){
+        if(direction == 0 && this.indoorNavigationData.nowMoveState.T == 0){
+          this.indoorNavigationData.nowMoveState.T = 1;
+
+          this.moveToSrc(
+            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
+            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
+            this.indoorNavigationData.nowMoveState.T);
+
+        } else if(direction == 1 && this.indoorNavigationData.nowMoveState.T == 1){
+          this.indoorNavigationData.nowMoveState.T = 0;
+
+          this.moveToDst(
+            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
+            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
+            this.indoorNavigationData.nowMoveState.T);
+        }
+      }(
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
         this.indoorNavigationData.nowMoveState.T);
@@ -744,9 +809,10 @@ define([
     } else if (direction == -1) {
       /** over threshold, not move */
     } else {
-      console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+       console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
     }
   }
+
 
 
   /**
