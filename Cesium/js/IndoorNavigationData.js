@@ -138,15 +138,21 @@ define([
    * Set {@link module:IndoorNavigationData.roomData} value.
    */
   IndoorNavigationData.prototype.setRoomData = function() {
+    console.log(this.gmlDataContainer.edges);
 
     var nowSection = "";
     var nowFloor = "";
+    var edgeLen = this.gmlDataContainer.edges.length;
 
-    var sectionIndex = -1;
-    var edgesLen = this.gmlDataContainer.edges.length;
+    for (var i = 0; i < edgeLen; i++) {
+      if (this.gmlDataContainer.edges[i].section != nowSection &&
+        this.sectionData.indexOf(this.gmlDataContainer.edges[i].section) == -1) {
 
-    for (var i = 0; i < edgesLen; i++) {
-      if (this.gmlDataContainer.edges[i].section != nowSection) {
+        /**
+         * if cellSpaceMember.section is different from nowSection
+         * and it is not exist in sectionData,
+         * add new section to sectionData.
+         */
 
         nowFloor = this.gmlDataContainer.edges[i].floor;
         nowSection = this.gmlDataContainer.edges[i].section;
@@ -157,20 +163,25 @@ define([
         newSection.push(nowFloor);
 
         this.floorData.push(newSection);
-        sectionIndex++;
+
       } else if (this.gmlDataContainer.edges[i].floor != nowFloor &&
-        this.gmlDataContainer.edges[i].section == nowSection) {
+        this.sectionData.indexOf(this.gmlDataContainer.edges[i].section) != -1) {
 
+        /**
+         * if cellSpaceMember.floor is different from nowFloor
+         * and it is exist in sectionData,
+         * add new floor to floorData.
+         */
         nowFloor = this.gmlDataContainer.edges[i].floor;
+        this.floorData[this.sectionData.indexOf(this.gmlDataContainer.edges[i].section)].push(nowFloor);
 
-        this.floorData[sectionIndex].push(nowFloor);
       }
 
       for (var j = 0; j < 2; j++) {
         var tmpRoomInfo = new RoomInfo(
           null,
-          nowSection,
-          nowFloor,
+          this.gmlDataContainer.edges[i].section,
+          this.gmlDataContainer.edges[i].floor,
           this.gmlDataContainer.edges[i].stateMembers[j].coordinates[0],
           this.gmlDataContainer.edges[i].stateMembers[j].coordinates[1],
           this.gmlDataContainer.edges[i].stateMembers[j].coordinates[2],
@@ -180,8 +191,6 @@ define([
       }
     }
   }
-
-
 
 
   return IndoorNavigationData;
