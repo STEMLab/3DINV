@@ -46,7 +46,6 @@ define([
    */
   IndoorNavigationAction.prototype.setTreeViewNavigation = function() {
     var data = this.makeRoomDataToJson();
-    console.log(data);
     setTreeView(data); // this function must in html
   }
 
@@ -57,6 +56,7 @@ define([
    * @return {Object}
    */
   IndoorNavigationAction.prototype.makeRoomDataToJson = function() {
+
     var roomArray = new Array();
 
     for (var i = 0; i < this.indoorNavigationData.sectionData.length; i++) {
@@ -68,7 +68,7 @@ define([
       roomArray.push(sectionInfo);
     }
 
-    for (var i = 0; i < this.indoorNavigationData.floorData.length; i++) {
+    for (var i = 0; i < this.indoorNavigationData.sectionData.length; i++) {
       for (var j = 0; j < this.indoorNavigationData.floorData[i].length; j++) {
         var floorInfo = new Object();
         floorInfo.id = this.indoorNavigationData.sectionData[i] + this.indoorNavigationData.floorData[i][j];
@@ -93,7 +93,7 @@ define([
 
     var themeInfo = new Object();
     themeInfo.name = 'proton';
-    themeInfo.responsive = true;
+    themeInfo.responsive = false;
 
     var pluginInfo = ["sort"];
     var sortInfo = function(a, b) {
@@ -110,7 +110,6 @@ define([
     jsonInfo.plugins = pluginInfo;
     jsonInfo.sort = sortInfo;
 
-    console.log(jsonInfo);
     return jsonInfo;
   }
 
@@ -137,8 +136,6 @@ define([
     if (pickedRoom == undefined) {
       return;
     }
-
-    console.log(pickedRoom);
 
     this.indoorNavigationData.nowMoveState.srcHref = roomHref[0];
     this.indoorNavigationData.nowMoveState.dstHref = null;
@@ -235,7 +232,9 @@ define([
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
         this.camera.direction);
 
-      if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 0) { //camera see src direction
+      if (this.checkStairAndMove(this.indoorNavigationData.nowMoveState.srcHref, this.indoorNavigationData.nowMoveState.dstHref) == 10) {
+        /* move stair */
+      } else if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 0) { //camera see src direction
         this.moveToSrc(
           this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
           this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
@@ -249,8 +248,25 @@ define([
         this.indoorNavigationData.nowMoveState.T += this.indoorNavigationData.moveRate;
       } else if (direction == -1) {
         /** over threshold, not move */
+        console.log("no more node to move");
+      } else if (direction == 0 &&
+        this.indoorNavigationData.nowMoveState.T == 0 &&
+        this.getEdgesConnectedToNowSrc().length == 1 &&
+        (this.getEdgesConnectedToNowSrc()[0].connects[0] == this.indoorNavigationData.nowMoveState.dstHref || this.getEdgesConnectedToNowSrc()[0].connects[1] == this.indoorNavigationData.nowMoveState.srcHref)) {
+        /** no more node to move */
+        console.log("no more node to move");
+      } else if (direction == 1 &&
+        this.indoorNavigationData.nowMoveState.T == 1 &&
+        this.getEdgesConnectedToNowSrc().length == 1 &&
+        (this.getEdgesConnectedToNowSrc()[0].connects[0] == this.indoorNavigationData.nowMoveState.dstHref || this.getEdgesConnectedToNowSrc()[0].connects[1] == this.indoorNavigationData.nowMoveState.srcHref)) {
+        /** no more node to move */
       } else {
-         console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+        /**
+         * In this case, an error such as seeing src in src or dst in dst occurs.
+         * This is often the case when dst and src are too close.
+         */
+        console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+        //  this.closeErrorControl(0, direction);
       }
     }
     console.log("actionMoveFront", direction, this.indoorNavigationData.nowMoveState);
@@ -266,7 +282,6 @@ define([
   IndoorNavigationAction.prototype.actionMoveBack = function() {
 
     var oppsiteDirection = this.getMovedCoordinate(2, this.camera.direction, this.camera.position);
-    console.log(this.camera.direction, this.camera.position, oppsiteDirection);
 
     /** check first condition*/
     this.checkAndAssignDst4MoveBack(oppsiteDirection);
@@ -279,7 +294,9 @@ define([
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
         this.camera.direction);
 
-      if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 1) {
+      if (this.checkStairAndMove(this.indoorNavigationData.nowMoveState.srcHref, this.indoorNavigationData.nowMoveState.dstHref) == 10) {
+        /* move stair */
+      } else if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 1) {
         /** camera see src direction */
         this.moveToDst(
           this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
@@ -295,8 +312,25 @@ define([
         this.indoorNavigationData.nowMoveState.T -= this.indoorNavigationData.moveRate;
       } else if (direction == -1) {
         /** over threshold, not move */
+      } else if (direction == 0 &&
+        this.indoorNavigationData.nowMoveState.T == 0 &&
+        this.getEdgesConnectedToNowSrc().length == 1 &&
+        (this.getEdgesConnectedToNowSrc()[0].connects[0] == this.indoorNavigationData.nowMoveState.dstHref || this.getEdgesConnectedToNowSrc()[0].connects[1] == this.indoorNavigationData.nowMoveState.srcHref)) {
+        /** no more node to move */
+        console.log("no more node to move");
+      } else if (direction == 1 &&
+        this.indoorNavigationData.nowMoveState.T == 1 &&
+        this.getEdgesConnectedToNowSrc().length == 1 &&
+        (this.getEdgesConnectedToNowSrc()[0].connects[0] == this.indoorNavigationData.nowMoveState.dstHref || this.getEdgesConnectedToNowSrc()[0].connects[1] == this.indoorNavigationData.nowMoveState.srcHref)) {
+        /** no more node to move */
+        console.log("no more node to move");
       } else {
-         console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+        /**
+         * In this case, an error such as seeing src in src or dst in dst occurs.
+         * This is often the case when dst and src are too close.
+         */
+        console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+        //  this.closeErrorControl(1, direction);
       }
       console.log("actionMoveBack", direction, this.indoorNavigationData.nowMoveState);
     }
@@ -444,6 +478,27 @@ define([
   }
 
 
+  /**
+   * Returns all edges connected with destination of nowMoveState.
+   * @return {Array} Array of {@link TransitionMember}
+   */
+  IndoorNavigationAction.prototype.getEdgesConnectedToNowDst = function() {
+
+    var connectedEdges = [];
+    var edgesLen = this.indoorNavigationData.gmlDataContainer.edges.length;
+
+    for (var i = 0; i < edgesLen; i++) {
+      if (this.indoorNavigationData.gmlDataContainer.edges[i].connects[0] == this.indoorNavigationData.nowMoveState.dstHref) {
+        connectedEdges.push(this.indoorNavigationData.gmlDataContainer.edges[i]);
+      } else if (this.indoorNavigationData.gmlDataContainer.edges[i].connects[1] == this.indoorNavigationData.nowMoveState.dstHref) {
+        connectedEdges.push(this.indoorNavigationData.gmlDataContainer.edges[i]);
+      }
+    }
+
+    return connectedEdges;
+  }
+
+
 
   /**
    * This function works as follows.
@@ -485,8 +540,8 @@ define([
         new Cesium.Cartesian3(dstCandidate[i].x, dstCandidate[i].y, dstCandidate[i].z));
 
       var diff;
-      if(tmpAngle > nowAngle) diff = nowAngle - tmpAngle;
-      else                    diff = tmpAngle - nowAngle;
+      if (tmpAngle > nowAngle) diff = nowAngle - tmpAngle;
+      else diff = tmpAngle - nowAngle;
 
       dstCandidateAngle.push(diff);
     }
@@ -554,9 +609,9 @@ define([
 
     var direction;
 
-    if      (srcAngle < dstAngle && srcAngle < this.indoorNavigationData.threshold) direction = 0;
+    if (srcAngle < dstAngle && srcAngle < this.indoorNavigationData.threshold) direction = 0;
     else if (dstAngle < srcAngle && dstAngle < this.indoorNavigationData.threshold) direction = 1;
-    else    direction = -1;
+    else direction = -1;
 
     console.log("getDirection : ", direction, " srcAngle:", srcAngle, " dstAngle:", dstAngle);
     return direction;
@@ -705,6 +760,7 @@ define([
       var lineName = feature['id']['name'];
       this.onClickPath(lineName);
     }
+    console.log(feature);
   }
 
 
@@ -761,7 +817,16 @@ define([
       now = this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate;
     }
 
-    if (now.href != pathSrcCoor.href || now.href != pathDstCoor.href) {
+
+    if((this.indoorNavigationData.nowMoveState.srcHref == pathSrcCoor.href
+        && this.indoorNavigationData.nowMoveState.dstHref == pathDstCoor.href
+        &&this.indoorNavigationData.nowMoveState. T !=0 ) ||
+       (this.indoorNavigationData.nowMoveState.srcHref == pathDstCoor.href
+        && this.indoorNavigationData.nowMoveState.dstHref == pathSrcCoor.href
+        && this.indoorNavigationData.nowMoveState.T != 0)){
+      /** If you are crossing the clicked edge, */
+      /** do not assign new value to nowMoveState */
+    }else if (now.href != pathSrcCoor.href || now.href != pathDstCoor.href) {
       /** if value of clicked edge not matches from nowMoveState data, set nowMoveState to path data */
       this.setMoveStateForOnClickEdge(pathSrcCoor, pathDstCoor);
     } else if (now.href == pathSrcCoor.href) {
@@ -777,25 +842,10 @@ define([
       this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
       this.camera.direction);
 
-    if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 0) { /** camera see src direction */
-      if (type == 0 || type == 2){
-        if(direction == 0 && this.indoorNavigationData.nowMoveState.T == 0){
-          this.indoorNavigationData.nowMoveState.T = 1;
-
-          this.moveToSrc(
-            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
-            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
-            this.indoorNavigationData.nowMoveState.T);
-
-        } else if(direction == 1 && this.indoorNavigationData.nowMoveState.T == 1){
-          this.indoorNavigationData.nowMoveState.T = 0;
-
-          this.moveToDst(
-            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
-            this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
-            this.indoorNavigationData.nowMoveState.T);
-        }
-      }(
+    if (this.checkStairAndMove(this.indoorNavigationData.nowMoveState.srcHref, this.indoorNavigationData.nowMoveState.dstHref) == 10) {
+      /* move stair */
+    } else if (direction == 0 && this.indoorNavigationData.nowMoveState.T != 0) { /** camera see src direction */
+      this.moveToSrc(
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
         this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
         this.indoorNavigationData.nowMoveState.T);
@@ -808,11 +858,78 @@ define([
       this.indoorNavigationData.nowMoveState.T += this.indoorNavigationData.moveRate;
     } else if (direction == -1) {
       /** over threshold, not move */
+      console.log("no more node to move");
+    } else if (direction == 0 &&
+      this.indoorNavigationData.nowMoveState.T == 0 &&
+      this.getEdgesConnectedToNowSrc().length == 1 &&
+      (this.getEdgesConnectedToNowSrc()[0].connects[0] == this.indoorNavigationData.nowMoveState.dstHref || this.getEdgesConnectedToNowSrc()[0].connects[1] == this.indoorNavigationData.nowMoveState.srcHref)) {
+      /** no more node to move */
+      console.log("no more node to move");
+    } else if (direction == 1 &&
+      this.indoorNavigationData.nowMoveState.T == 1 &&
+      this.getEdgesConnectedToNowSrc().length == 1 &&
+      (this.getEdgesConnectedToNowSrc()[0].connects[0] == this.indoorNavigationData.nowMoveState.dstHref || this.getEdgesConnectedToNowSrc()[0].connects[1] == this.indoorNavigationData.nowMoveState.srcHref)) {
+      /** no more node to move */
     } else {
-       console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+      /**
+       * In this case, an error such as seeing src in src or dst in dst occurs.
+       * This is often the case when dst and src are too close.
+       */
+      console.log("error! ", direction, this.indoorNavigationData.nowMoveState);
+      this.closeErrorControl(2, direction);
     }
   }
 
+
+  IndoorNavigationAction.prototype.closeErrorControl = function(type, direction) {
+    var tmp = this.indoorNavigationData.nowMoveState.srcHref;
+    this.indoorNavigationData.nowMoveState.srcHref = this.indoorNavigationData.nowMoveState.dstHref;
+    this.indoorNavigationData.nowMoveState.dstHref = tmp;
+
+    if (type == 0 || type == 2) {
+      if (direction == 0 && this.indoorNavigationData.nowMoveState.T == 0) {
+        // this.indoorNavigationData.nowMoveState.T = 1;
+
+        this.moveToDst(
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
+          this.indoorNavigationData.nowMoveState.T);
+        this.indoorNavigationData.nowMoveState.T += this.indoorNavigationData.moveRate;
+
+      } else if (direction == 1 && this.indoorNavigationData.nowMoveState.T == 1) {
+        // this.indoorNavigationData.nowMoveState.T = 0;
+
+        this.moveToSrc(
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
+          this.indoorNavigationData.nowMoveState.T);
+        this.indoorNavigationData.nowMoveState.T -= this.indoorNavigationData.moveRate;
+      }
+    } else if (type == 1) {
+      if (direction == 0 && this.indoorNavigationData.nowMoveState.T == 1) {
+        // this.indoorNavigationData.nowMoveState.T = 0;
+
+        this.moveToSrc(
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
+          this.indoorNavigationData.nowMoveState.T);
+
+        this.indoorNavigationData.nowMoveState.T -= this.indoorNavigationData.moveRate;
+
+      } else if (direction == 1 && this.indoorNavigationData.nowMoveState.T == 0) {
+        // this.indoorNavigationData.nowMoveState.T = 1;
+
+        this.moveToDst(
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.srcHref).coordinate,
+          this.indoorNavigationData.roomData.get(this.indoorNavigationData.nowMoveState.dstHref).coordinate,
+          this.indoorNavigationData.nowMoveState.T);
+
+        this.indoorNavigationData.nowMoveState.T += this.indoorNavigationData.moveRate;
+      }
+    } else {
+      console.log("error! type error : ", type);
+    }
+  }
 
 
   /**
@@ -825,7 +942,6 @@ define([
    */
   IndoorNavigationAction.prototype.firstClickOnBuilding = function() {
     if (this.indoorNavigationData.entranceHref != null) {
-      console.log(this.indoorNavigationData.roomData.get(this.indoorNavigationData.entranceHref));
       var roomHref = [];
       roomHref[0] = this.indoorNavigationData.entranceHref;
       this.onClickTreeView(roomHref);
@@ -877,6 +993,37 @@ define([
         roll: roll
       }
     });
+  }
+
+
+  /**
+   * Using the stored room information{@link module:IndoorNavigationData.roomData}, judge whether the current edge is a stair or not. </br>
+   * If the floor of the room at both ends of the edge is different, this function judge as a stair and moves to the upper layer.
+   * @param {string} srcHref href of source node of edge
+   * @param {string} srcHref href of destination node of edge
+   */
+  IndoorNavigationAction.prototype.checkStairAndMove = function(srcHref, dstHref) {
+
+    var upperFloorCoor, lowerFloorCoor;
+    var srcCoor = this.indoorNavigationData.roomData.get(srcHref);
+    var dstCoor = this.indoorNavigationData.roomData.get(dstHref);
+
+    if (srcCoor.floor < dstCoor.floor) {
+      upperFloorCoor = dstCoor;
+      lowerFloorCoor = srcCoor;
+    } else if (srcCoor.floor > dstCoor.floor) {
+      upperFloorCoor = srcCoor;
+      lowerFloorCoor = dstCoor;
+    }
+
+    if (upperFloorCoor != null && lowerFloorCoor != null) {
+      this.transformCamera(upperFloorCoor.coordinate);
+      this.indoorNavigationData.nowMoveState.srcHref = upperFloorCoor.coordinate.href;
+      this.indoorNavigationData.nowMoveState.dstHref = null;
+      this.indoorNavigationData.nowMoveState.T = 0;
+      return 10;
+    }
+    return 0;
   }
 
 
