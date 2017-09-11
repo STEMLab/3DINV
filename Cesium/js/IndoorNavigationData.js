@@ -59,9 +59,9 @@ define([
     this.nowMoveState = new MoveState();
 
     /**
-     * @default 1.568
+     * @default 1.575
      */
-    this.threshold = 1.568;
+    this.threshold = 1.575;
 
     /**
      * key : href, value : {@link RoomInfo}
