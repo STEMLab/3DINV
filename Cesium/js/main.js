@@ -25,7 +25,7 @@ require([
 
   console.log(YOUR JSON FILE NAME,);
 
-  var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME,);
+  var gmlDataContainer = new GMLDataContainer(YOUR JSON FILE NAME, YOUR_VERSION);
 
   gmlDataContainer.rotateBuilding(
    viewer,
@@ -65,7 +65,6 @@ require([
     var feature = viewer.scene.pick(movement.position);
     if (Cesium.defined(feature)) {
       indoorNavigationAction.onClickPolygonPath(feature);
-      // indoorNavigationAction.onClickPolylinePath(feature);
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
