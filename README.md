@@ -1,18 +1,9 @@
 # **3DINV**
 
 **3D Indoor Navigation Viewer.**</br>
- When navigating indoor spaces using a map application, the user will expect to no longer move forward in a situation facing the wall. However, in a real map application, when you meet a wall, you often pass through a wall and move to the next room. In addition, when you move the camera with the mouse wheel, it does not give you the feeling that you are moving in space continuously, but it gives you the discrete changing scene.
+  When navigating indoor spaces using a map application, the user will expect to no longer move forward in a situation facing the wall. However, in a real map application, when you meet a wall, you often pass through a wall and move to the next room. These problems are caused by the data used to build indoor viewer. Mostly, that "data" is collect point by point. So it might be can't distinguish wall between an point and the other and the distance between two point might be quite long. And it will cause problems such as sudden dropping or teleporting.
 
-There are two main reasons why the current indoor viewer has the above problems.
-
-First, the viewer can not detect the collision of the user's movement route with the wall or other structure. In other words, the indoor viewer does not have a function for detecting collision.
-
-And discrete shooting the search space is another cause. Since the camera is fixed at a regular interval and shot 360 degrees, the camera is not moving continuously as in the real world, but rather it stops at each point and looks around the building.
-
-To solve these problems, we should use network information to define the camera moving path.
-This indoor network information is predefined in indoorGML data.
-The user will browse the indoor space only through the predefined network, which can prevent the collision and give continuity to the indoor space seen by the user. Through this, the project can solve the problems that the indoor viewer is currently facing, and establish a more comfortable browsing environment.
-
+  In this project, we propose a viewer that restricts user's movement more strictly by using IndoorGML data. IndoorGML is a language that defines indoor space data including network. By using this data to constrain the space the user can move, the above mentioned problem can be solved.
 
 ## Getting Started
 ### Installing
